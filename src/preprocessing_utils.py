@@ -1,5 +1,6 @@
 import numpy as np
 
+
 train_test_dtypes = {
     'train_dtypes': {
         'stock_id': np.uint8,  # ID of the stock

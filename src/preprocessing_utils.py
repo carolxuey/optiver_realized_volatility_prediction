@@ -38,69 +38,63 @@ trade_dtypes = {
 }
 
 
-def read_book_data(dataset, stock_id=None):
+def read_book_data(dataset, stock_id, sort=False, forward_fill=False):
 
     """
-    Read the whole book data or selected stock_id partition from selected dataset
+    Read book data of the selected stock
 
     Parameters
     ----------
     dataset (str): Name of the dataset (train or test)
-    stock_id (int or None): ID of the stock (0 <= stock_id <= 126) or None
+    stock_id (int): ID of the stock (0 <= stock_id <= 126)
+    sort (bool): Whether to sort book data by time_id and seconds_in_bucket or not
+    forward_fill (bool): Whether to reindex every time bucket to 600 seconds and forward fill missing values or not
 
     Returns
     -------
-    df_book [pandas.DataFrame of shape (n_samples, 10 if stock_id is selected else 11)]: Book data
+    df_book [pandas.DataFrame of shape (n_samples, 10)]: Book data of the selected stock
     """
 
-    if stock_id is None:
-        df_book = pd.read_parquet(f'../data/book_{dataset}.parquet')
-    else:
-        df_book = pd.read_parquet(f'../data/book_{dataset}.parquet/stock_id={stock_id}')
-
+    df_book = pd.read_parquet(f'../data/book_{dataset}.parquet/stock_id={stock_id}')
     for column, dtype in book_dtypes.items():
-        # Skip iteration if parquet file is partitioned by stock_id
-        if column == 'stock_id' and stock_id is not None:
-            continue
         df_book[column] = df_book[column].astype(dtype)
 
-    if stock_id is None:
-        df_book.sort_values(by=['stock_id', 'time_id', 'seconds_in_bucket'], inplace=True)
-    else:
+    if sort:
         df_book.sort_values(by=['time_id', 'seconds_in_bucket'], inplace=True)
+
+    if forward_fill:
+        df_book = df_book.set_index(['time_id', 'seconds_in_bucket'])
+        df_book = df_book.reindex(
+            pd.MultiIndex.from_product([df_book.index.levels[0], np.arange(0, 600)], names=['time_id', 'seconds_in_bucket']),
+            method='ffill'
+        )
+        df_book.reset_index(inplace=True)
 
     return df_book
 
 
-def read_trade_data(dataset, stock_id=None):
+def read_trade_data(dataset, stock_id, sort=False):
 
     """
-    Read the whole trade data or selected stock_id partition from selected dataset
+    Read trade data of the selected stock
 
     Parameters
     ----------
     dataset (str): Name of the dataset (train or test)
-    stock_id (int or None): ID of the stock (0 <= stock_id <= 126) or None
+    stock_id (int): ID of the stock (0 <= stock_id <= 126)
+    sort (bool): Whether to sort book data by time_id and seconds_in_bucket or not
 
     Returns
     -------
-    df_trade [pandas.DataFrame of shape (n_samples, 5 if stock_id is selected else 6)]: Trade data
+    df_trade [pandas.DataFrame of shape (n_samples, 5)]: Trade data of the selected stock
     """
 
-    if stock_id is None:
-        df_trade = pd.read_parquet(f'../data/trade_{dataset}.parquet')
-    else:
-        df_trade = pd.read_parquet(f'../data/trade_{dataset}.parquet/stock_id={stock_id}')
+    df_trade = pd.read_parquet(f'../data/trade_{dataset}.parquet/stock_id={stock_id}')
 
     for column, dtype in trade_dtypes.items():
-        # Skip iteration if parquet file is partitioned by stock_id
-        if column == 'stock_id' and stock_id is not None:
-            continue
         df_trade[column] = df_trade[column].astype(dtype)
 
-    if stock_id is None:
-        df_trade.sort_values(by=['stock_id', 'time_id', 'seconds_in_bucket'], inplace=True)
-    else:
+    if sort:
         df_trade.sort_values(by=['time_id', 'seconds_in_bucket'], inplace=True)
 
     return df_trade

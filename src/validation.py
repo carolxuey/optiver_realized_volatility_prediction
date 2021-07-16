@@ -5,7 +5,7 @@ from sklearn.model_selection import StratifiedKFold, GroupKFold
 def get_stratified_folds(df_train, n_splits, shuffle=True, random_state=42, verbose=False):
 
     """
-    Create a column of fold numbers with specified configuration of stratified k-fold
+    Create a column of fold numbers with specified configuration of stratified k-fold on given training set
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def get_stratified_folds(df_train, n_splits, shuffle=True, random_state=42, verb
 def get_group_folds(df_train, n_splits, verbose=False):
 
     """
-    Create a column of fold numbers with specified configuration of group k-fold
+    Create a column of fold numbers with specified configuration of group k-fold on given training set
 
     Parameters
     ----------
@@ -41,7 +41,7 @@ def get_group_folds(df_train, n_splits, verbose=False):
     """
 
     gkf = GroupKFold(n_splits=n_splits)
-    for fold, (_, val_idx) in enumerate(gkf.split(X=df_train, groups=df_train['stock_id']), 1):
+    for fold, (_, val_idx) in enumerate(gkf.split(X=df_train, groups=df_train['time_id']), 1):
         df_train.loc[val_idx, 'group_fold'] = fold
     df_train[f'group_fold'] = df_train['group_fold'].astype(np.uint8)
 

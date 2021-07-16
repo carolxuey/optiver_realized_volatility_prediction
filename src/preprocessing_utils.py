@@ -3,19 +3,18 @@ import pandas as pd
 
 
 train_test_dtypes = {
-    'train_dtypes': {
+    'train': {
         'stock_id': np.uint8,  # ID of the stock
         'time_id': np.uint16,  # ID of the time bucket
         'target': np.float64  # Realized volatility of the next 10 minutes
     },
-    'test_dtypes': {
+    'test': {
         'stock_id': np.uint8,  # ID of the stock
         'time_id': np.uint16  # ID of the time bucket
     }
 }
 
 book_dtypes = {
-    'stock_id': np.uint8,  # ID of the stock
     'time_id': np.uint16,  # ID of the time bucket
     'seconds_in_bucket': np.uint16,  # Number of seconds passed since the start of the bucket
     'bid_price1': np.float32,  # Highest buy price after normalization
@@ -29,7 +28,6 @@ book_dtypes = {
 }
 
 trade_dtypes = {
-    'stock_id': np.uint8,  # ID of the stock
     'time_id': np.uint16,  # ID of the time bucket
     'seconds_in_bucket': np.uint16,  # Number of seconds passed since the start of the bucket
     'price': np.float32,  # The average price of executed transactions happening in one second

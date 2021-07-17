@@ -1,0 +1,24 @@
+preprocessing:
+  split_type: stratified
+  n_splits: 5
+  shuffle: True
+  random_state: 42
+
+model:
+  input_size: 8
+  hidden_size: 128
+  num_layers: 2
+
+training:
+  amp: False
+  learning_rate: 0.0001
+  betas:
+    - 0.9
+    - 0.999
+  weight_decay: 0
+  epochs: 25
+  batch_size: 128
+  early_stopping_patience: 5
+  num_workers: 8
+  random_state: 42
+  deterministic_cudnn: False

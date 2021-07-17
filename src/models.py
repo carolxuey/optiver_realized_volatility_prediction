@@ -50,11 +50,16 @@ class ResNetModel(nn.Module):
         self.backbone.global_pool = nn.Identity()
         self.backbone.fc = nn.Identity()
         self.pooling = nn.AdaptiveAvgPool2d(1)
+        self.conv_to_3d = nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=3, bias=False)
         self.regressor = nn.Linear(in_features, 1, bias=True)
 
     def forward(self, x):
 
         batch_size = x.size(0)
+        print(x.shape)
+        x = self.conv_to_3d(x)
+        print(x.shape)
+        exit()
         features = self.backbone(x)
         pooled_features = self.pooling(features).view(batch_size, -1)
         output = self.regressor(pooled_features)

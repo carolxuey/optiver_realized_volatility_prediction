@@ -43,6 +43,7 @@ class RNNTrainer:
 
     def train_fn(self, train_loader, model, criterion, optimizer, device):
 
+        print('\n')
         model.train()
         progress_bar = tqdm(train_loader)
         losses = []
@@ -99,7 +100,10 @@ class RNNTrainer:
     def train_and_validate(self, df_train):
 
         print(f'\n{"-" * 30}\nRunning RNN Model for Training\n{"-" * 30}\n')
+
         for fold in sorted(df_train['fold'].unique()):
+
+            print(f'Fold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
             train_dataset = OptiverDataset(df=df_train.loc[trn_idx, :], dataset='train')

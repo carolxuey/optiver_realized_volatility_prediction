@@ -28,7 +28,9 @@ class RNNModel(nn.Module):
         h_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
         c_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
         lstm_output, (h_n, c_n) = self.lstm(x, (h_n0, c_n0))
-        avg_pooled_features = torch.mean(lstm_output, 1)
-        output = self.linear(avg_pooled_features)
+        #avg_pooled_features = torch.mean(lstm_output, 1)
+        h_n = h_n.view(-1, self.hidden_size)
+        
+        output = self.linear(h_n)
 
         return output

@@ -7,11 +7,11 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 import torch.optim as optim
 
 from datasets import OptiverDataset
-from models import RNNModel
+from models import RNNModel, ResNetModel
 from visualize import draw_learning_curve
 
 
-class RNNTrainer:
+class Trainer:
 
     def __init__(self, model_name, model_path, model_parameters, training_parameters):
 
@@ -38,7 +38,13 @@ class RNNTrainer:
 
     def get_model(self):
 
-        model = RNNModel(**self.model_parameters)
+        if self.model_name == 'rnn':
+            model = RNNModel(**self.model_parameters)
+        elif 'resnet' in self.model_name:
+            model = ResNetModel(**self.model_parameters)
+        else:
+            model = None
+
         return model
 
     def train_fn(self, train_loader, model, criterion, optimizer, device):
@@ -99,7 +105,7 @@ class RNNTrainer:
 
     def train_and_validate(self, df_train):
 
-        print(f'\n{"-" * 30}\nRunning RNN Model for Training\n{"-" * 30}\n')
+        print(f'\n{"-" * 26}\nRunning Model for Training\n{"-" * 26}\n')
 
         for fold in sorted(df_train['fold'].unique()):
 

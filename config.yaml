@@ -1,4 +1,4 @@
-model_name: rnn
+model_name: resnet
 
 preprocessing:
   split_type: stratified
@@ -7,9 +7,9 @@ preprocessing:
   random_state: 42
 
 model:
-  input_size: 8
-  hidden_size: 256
-  num_layers: 2
+  model_name: resnet18d
+  pretrained: True
+  trainable_backbone: True
 
 training:
   amp: False

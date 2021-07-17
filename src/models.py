@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import timm
 
 
 class RNNModel(nn.Module):
@@ -21,16 +22,41 @@ class RNNModel(nn.Module):
             bidirectional=False,
             batch_first=True
         )
-        self.linear = nn.Linear(hidden_size, 1)
+        self.regressor = nn.Linear(hidden_size, 1)
 
     def forward(self, x):
 
         h_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
         c_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
         lstm_output, (h_n, c_n) = self.lstm(x, (h_n0, c_n0))
-        #avg_pooled_features = torch.mean(lstm_output, 1)
-        h_n = h_n.view(-1, self.hidden_size)
-        
-        output = self.linear(h_n)
+        avg_pooled_features = torch.mean(lstm_output, 1)
+        output = self.regressor(avg_pooled_features)
+
+        return output
+
+
+class ResNetModel(nn.Module):
+
+    def __init__(self, model_name, pretrained=False, trainable_backbone=True):
+
+        super(ResNetModel, self).__init__()
+
+        self.backbone = timm.create_model(model_name, pretrained=pretrained)
+        if trainable_backbone is False:
+            for p in self.backbone.parameters():
+                p.requires_grad = False
+
+        in_features = self.backbone.fc.in_features
+        self.backbone.global_pool = nn.Identity()
+        self.backbone.fc = nn.Identity()
+        self.pooling = nn.AdaptiveAvgPool2d(1)
+        self.regressor = nn.Linear(in_features, 1, bias=True)
+
+    def forward(self, x):
+
+        batch_size = x.size(0)
+        features = self.backbone(x)
+        pooled_features = self.pooling(features).view(batch_size, -1)
+        output = self.regressor(pooled_features)
 
         return output

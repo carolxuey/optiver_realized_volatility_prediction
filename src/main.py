@@ -3,7 +3,7 @@ import pandas as pd
 
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
-from rnn_trainer import RNNTrainer
+from trainer import Trainer
 
 
 if __name__ == '__main__':
@@ -31,12 +31,10 @@ if __name__ == '__main__':
     print(f'Processed Test Set Shape: {df_test.shape}')
     print(f'Processed Test Set Memory Usage: {df_test.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
-    if config['model_name'] == 'rnn':
-
-        rnn_trainer = RNNTrainer(
-            model_name=config['model_name'],
-            model_path=None,
-            model_parameters=config['model'],
-            training_parameters=config['training']
-        )
-        rnn_trainer.train_and_validate(df_train)
+    trainer = Trainer(
+        model_name=config['model_name'],
+        model_path=None,
+        model_parameters=config['model'],
+        training_parameters=config['training']
+    )
+    trainer.train_and_validate(df_train)

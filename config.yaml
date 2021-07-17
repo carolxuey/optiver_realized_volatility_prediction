@@ -1,3 +1,5 @@
+model_name: rnn
+
 preprocessing:
   split_type: stratified
   n_splits: 5

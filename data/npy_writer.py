@@ -29,12 +29,12 @@ def write_book_npy_files(df, dataset):
         os.makedirs(root_dir)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
-        df_book = preprocessing_utils.read_book_data('train', stock_id)
+        df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
         stock_dir = os.path.join(root_dir, f'stock_{stock_id}')
         if not os.path.exists(stock_dir):
             os.makedirs(stock_dir)
 
-        for time_id in tqdm(sorted(df_book['time_id'].unique())):
+        for time_id in sorted(df_book['time_id'].unique()):
             sequences = df_book.loc[df_book['time_id'] == time_id, book_features].values
             filename = os.path.join(stock_dir, f'time_{time_id}.npy')
             np.save(filename, sequences)

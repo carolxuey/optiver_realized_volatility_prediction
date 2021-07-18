@@ -22,8 +22,18 @@ class OptiverDataset(Dataset):
         time_id = int(sample['time_id'])
         target = sample['target']
 
+        book_means = torch.tensor([
+            0.99969482421875, 1.000321388244629, 0.9995064735412598, 1.0005191564559937,
+            769.990177708821, 766.7345672818379, 959.3416027831918, 928.2202512713748
+        ])
+        book_stds = torch.tensor([
+            0.0036880988627672195, 0.003687119111418724, 0.0037009266670793295, 0.0036990800872445107,
+            5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827
+        ])
+
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         book_sequences = torch.as_tensor(book_sequences, dtype=torch.float)
+        book_sequences = (book_sequences - book_means) / book_stds
         target = torch.as_tensor(target, dtype=torch.double)
 
         return book_sequences, target

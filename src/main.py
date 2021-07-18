@@ -47,4 +47,4 @@ if __name__ == '__main__':
     if args.mode == 'train':
         trainer.train_and_validate(df_train)
     elif args.mode == 'inference':
-        trainer.train_and_validate(df_train, df_test)
+        trainer.inference(df_train, df_test)

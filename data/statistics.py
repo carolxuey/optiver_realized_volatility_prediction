@@ -8,6 +8,19 @@ from src import preprocessing_utils
 
 def get_statistics(df):
 
+    """
+    Calculate means and stds of book sequences on entire training set after forward filling
+
+    Parameters
+    ----------
+    df [pandas.DataFrame of shape (n_samples, 3)]: Training set
+
+    Returns
+    -------
+    means (dict): Means of specified features on entire training set
+    stds (dict): Stds of specified features on entire training set
+    """
+
     book_features = [
         'bid_price1', 'ask_price1', 'bid_price2', 'ask_price2',
         'bid_size1', 'ask_size1', 'bid_size2', 'ask_size2',

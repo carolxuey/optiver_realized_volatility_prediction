@@ -1,4 +1,5 @@
 model_name: cnn
+model_path: ../models/cnn1
 
 preprocessing:
   split_type: stratified
@@ -8,9 +9,6 @@ preprocessing:
 
 model:
   in_channels: 8
-  #input_size: 8
-  #hidden_size: 128
-  #num_layers: 1
 
 training:
   amp: False

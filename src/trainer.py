@@ -34,7 +34,9 @@ class Trainer:
         torch.cuda.manual_seed_all(seed)
 
     def rmspe_loss(self, y_true, y_pred):
-        return torch.sqrt(torch.mean(torch.square((y_true - y_pred) / y_true)))
+
+        rmspe = torch.sqrt(torch.mean(torch.square((y_true - y_pred) / y_true)))
+        return rmspe
 
     def get_model(self):
 

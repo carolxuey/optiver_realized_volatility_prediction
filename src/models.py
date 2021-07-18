@@ -70,24 +70,41 @@ class CNNModel(nn.Module):
         super(CNNModel, self).__init__()
         self.conv_block1 = Conv1DBlock(
             in_channels=in_channels,
-            out_channels=8,
-            kernel_size=7,
+            out_channels=16,
+            kernel_size=5,
             stride=1,
-            padding=(0, 0),
+            padding=0,
             dilation=1,
             dropout_rate=0
         )
+        self.conv_block2 = Conv1DBlock(
+            in_channels=12,
+            out_channels=32,
+            kernel_size=7,
+            stride=1,
+            padding=0,
+            dilation=1,
+            dropout_rate=0
+        )
+        self.pooling1 = nn.AvgPool2d(kernel_size=5, stride=1)
+        self.pooling2 = nn.AvgPool2d(kernel_size=8, stride=1)
+        self.regressor = nn.Linear(14475, 1, bias=True)
+
 
     def forward(self, x):
 
-        print(x)
-        print(x.shape)
+        x = torch.transpose(x, 1, 2)
+        #print(x.shape)
         x = self.conv_block1(x)
-        print(x)
-        print(x.shape)
+        #print(x.shape)
+        x = self.pooling1(x)
+        x = self.conv_block2(x)
+        x = self.pooling2(x)
+        x = x.view(x.size(0), -1)
+        #print(x.shape)
+        output = self.regressor(x)
 
-
-        return x
+        return output.view(-1)
 
 
 class ResNetModel(nn.Module):

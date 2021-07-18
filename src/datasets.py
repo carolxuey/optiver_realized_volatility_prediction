@@ -34,6 +34,7 @@ class OptiverDataset(Dataset):
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         book_sequences = torch.as_tensor(book_sequences, dtype=torch.float)
         book_sequences = (book_sequences - book_means) / book_stds
-        target = torch.as_tensor(target, dtype=torch.double)
+        target = torch.as_tensor(target, dtype=torch.float)
 
         return book_sequences, target
+

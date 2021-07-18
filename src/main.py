@@ -1,4 +1,5 @@
 import yaml
+import argparse
 import pandas as pd
 
 import preprocessing_utils
@@ -9,6 +10,11 @@ from trainer import Trainer
 if __name__ == '__main__':
 
     config = yaml.load(open('../config.yaml', 'r'), Loader=yaml.FullLoader)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('mode', type=str)
+    args = parser.parse_args()
+
     df_train = pd.read_csv(
         '../data/train.csv',
         dtype=preprocessing_utils.train_test_dtypes['train']
@@ -33,8 +39,12 @@ if __name__ == '__main__':
 
     trainer = Trainer(
         model_name=config['model_name'],
-        model_path=None,
+        model_path=config['model_path'],
         model_parameters=config['model'],
         training_parameters=config['training']
     )
-    trainer.train_and_validate(df_train)
+
+    if args.mode == 'train':
+        trainer.train_and_validate(df_train)
+    elif args.mode == 'inference':
+        trainer.train_and_validate(df_test)

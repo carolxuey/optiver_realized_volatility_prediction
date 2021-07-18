@@ -35,6 +35,61 @@ class RNNModel(nn.Module):
         return output
 
 
+class Conv1DBlock(nn.Module):
+
+    def __init__(self, in_channels, out_channels, kernel_size, stride, dilation, padding, dropout_rate):
+
+        super(Conv1DBlock, self).__init__()
+        self.conv = nn.Conv1d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            bias=True
+        )
+        self.batch_norm = nn.BatchNorm1d(out_channels)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=dropout_rate)
+
+    def forward(self, x):
+
+        x = self.conv(x)
+        x = self.batch_norm(x)
+        x = self.relu(x)
+        output = self.dropout(x)
+
+        return output
+
+
+class CNNModel(nn.Module):
+
+    def __init__(self, in_channels):
+
+        super(CNNModel, self).__init__()
+        self.conv_block1 = Conv1DBlock(
+            in_channels=in_channels,
+            out_channels=8,
+            kernel_size=7,
+            stride=1,
+            padding=(0, 0),
+            dilation=1,
+            dropout_rate=0
+        )
+
+    def forward(self, x):
+
+        print(x)
+        print(x.shape)
+        x = self.conv_block1(x)
+        print(x)
+        print(x.shape)
+
+
+        return x
+
+
 class ResNetModel(nn.Module):
 
     def __init__(self, model_name, pretrained=False, trainable_backbone=True):

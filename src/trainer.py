@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 import torch.optim as optim
 
 from datasets import OptiverDataset
-from models import RNNModel, ResNetModel
+from models import RNNModel, CNNModel, ResNetModel
 from visualize import draw_learning_curve
 
 
@@ -40,6 +40,8 @@ class Trainer:
 
         if self.model_name == 'rnn':
             model = RNNModel(**self.model_parameters)
+        elif self.model_name == 'cnn':
+            model = CNNModel(**self.model_parameters)
         elif 'resnet' in self.model_name:
             model = ResNetModel(**self.model_parameters)
         else:

@@ -1,4 +1,4 @@
-model_name: resnet
+model_name: cnn
 
 preprocessing:
   split_type: stratified
@@ -7,9 +7,7 @@ preprocessing:
   random_state: 42
 
 model:
-  model_name: resnet18d
-  pretrained: True
-  trainable_backbone: True
+  in_channels: 8
 
 training:
   amp: False

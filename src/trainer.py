@@ -1,13 +1,14 @@
-import os
-import random
 from tqdm import tqdm
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 import torch.optim as optim
 
+import path_utils
+import training_utils
 from datasets import OptiverDataset
-from models import RNNModel, CNNModel, ResNetModel
+from rnn_models import RNNModel
+from cnn_models import CNNModel
 from visualize import draw_learning_curve
 
 
@@ -20,32 +21,12 @@ class Trainer:
         self.model_parameters = model_parameters
         self.training_parameters = training_parameters
 
-    def set_seed(self, seed, deterministic_cudnn=False):
-
-        if deterministic_cudnn:
-            torch.backends.cudnn.deterministic = True
-            torch.backends.cudnn.benchmark = False
-
-        os.environ['PYTHONHASHSEED'] = str(seed)
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-
-    def rmspe_loss(self, y_true, y_pred):
-
-        rmspe = torch.sqrt(torch.mean(torch.square((y_true - y_pred) / y_true)))
-        return rmspe
-
     def get_model(self):
 
         if self.model_name == 'rnn':
             model = RNNModel(**self.model_parameters)
         elif self.model_name == 'cnn':
             model = CNNModel(**self.model_parameters)
-        elif 'resnet' in self.model_name:
-            model = ResNetModel(**self.model_parameters)
         else:
             model = None
 
@@ -64,7 +45,6 @@ class Trainer:
             scaler = None
 
         for sequences, target in progress_bar:
-
             sequences, target = sequences.to(device), target.to(device)
 
             if scaler is not None:
@@ -125,7 +105,7 @@ class Trainer:
                 drop_last=False,
                 num_workers=self.training_parameters['num_workers'],
             )
-            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='train')
+            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='val')
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -135,12 +115,12 @@ class Trainer:
                 num_workers=self.training_parameters['num_workers'],
             )
 
-            self.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
+            training_utils.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
             device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
             model = self.get_model()
             model = model.to(device)
 
-            criterion = self.rmspe_loss
+            criterion = training_utils.rmspe_loss_pt
             optimizer = optim.Adam(
                 model.parameters(),
                 lr=self.training_parameters['learning_rate'],
@@ -165,7 +145,7 @@ class Trainer:
 
                 best_val_loss = np.min(summary['val_loss']) if len(summary['val_loss']) > 0 else np.inf
                 if val_loss < best_val_loss:
-                    model_path = f'{self.model_name}_fold{fold}.pt'
+                    model_path = f'{path_utils.MODELS_PATH}/{self.model_name}_fold{fold}.pt'
                     torch.save(model, model_path)
                     print(f'Saving model to {model_path} (validation loss decreased from {best_val_loss:.6f} to {val_loss:.6f})')
 
@@ -179,6 +159,67 @@ class Trainer:
                     draw_learning_curve(
                         training_losses=summary['train_loss'],
                         validation_losses=summary['val_loss'],
-                        title=f'{self.model_name} - Fold {fold} Learning Curve'
+                        title=f'{self.model_name} - Fold {fold} Learning Curve',
+                        path=f'{path_utils.MODELS_PATH}/{self.model_name}_fold{fold}_learning_curve.png'
                     )
                     early_stopping = True
+
+    def inference(self, df_train, df_test):
+
+        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}\n')
+        df_train[f'{self.model_name}_predictions'] = 0
+        df_test[f'{self.model_name}_predictions'] = 0
+
+        test_dataset = OptiverDataset(df=df_test, dataset='test')
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=self.model_parameters['batch_size'],
+            sampler=SequentialSampler(test_dataset),
+            pin_memory=False,
+            drop_last=False,
+            num_workers=0
+        )
+
+        for fold in sorted(df_train['fold'].unique()):
+
+            _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
+            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='val')
+            val_loader = DataLoader(
+                val_dataset,
+                batch_size=self.training_parameters['batch_size'],
+                sampler=SequentialSampler(val_dataset),
+                pin_memory=True,
+                drop_last=False,
+                num_workers=self.training_parameters['num_workers'],
+            )
+
+            training_utils.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
+            device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+            model = torch.load(self.model_path, map_location=device)
+
+            val_predictions = []
+            with torch.no_grad():
+                for sequences, target in val_loader:
+                    sequences, target = sequences.to(device), target.to(device)
+                    output = model(sequences)
+                    output = output.detach().cpu().numpy().squeeze().tolist()
+                    val_predictions += output
+
+            test_predictions = []
+            with torch.no_grad():
+                for sequences in test_loader:
+                    sequences = sequences.to(device)
+                    output = model(sequences)
+                    output = output.detach().cpu().numpy().squeeze().tolist()
+                    test_predictions += output
+
+            df_train.loc[val_idx, f'{self.model_name}_predictions'] = val_predictions
+            df_test[f'{self.model_name}_predictions'] += (np.array(test_predictions) / df_train['fold'].nunique())
+            fold_score = training_utils.rmspe_metric(df_train.loc[val_idx, 'target'], val_predictions)
+            print(f'Fold {fold} - RMSPE: {fold_score:.6}')
+
+            del _, val_idx, val_dataset, val_loader, val_predictions, test_predictions, model
+        del test_dataset, test_loader
+
+        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
+        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')

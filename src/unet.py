@@ -40,11 +40,11 @@ class Conv1dUpsample(nn.Module):
         return x
 
 
-class UNet1d(nn.Module):
+class UNetModel(nn.Module):
 
     def __init__(self, in_channels, out_channels):
 
-        super(UNet1d, self).__init__()
+        super(UNetModel, self).__init__()
         self.pooling = nn.AvgPool1d(kernel_size=2, stride=2)
 
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=64, kernel_size=3, stride=1, dilation=1, padding=1)

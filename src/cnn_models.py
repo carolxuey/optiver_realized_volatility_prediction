@@ -25,10 +25,11 @@ class CNNModel(nn.Module):
     def __init__(self, in_channels):
 
         super(CNNModel, self).__init__()
-        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, kernel_size=3, stride=1, padding=0, dilation=1, dropout_rate=0)
-        self.conv_block2 = Conv1dBlock(in_channels=12, out_channels=32, kernel_size=3, stride=1, padding=0, dilation=1, dropout_rate=0)
-        self.pooling = nn.AvgPool2d(kernel_size=2, stride=1)
-        self.regressor = nn.Linear(16296, 1, bias=True)
+        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, kernel_size=5, stride=1, padding=0, dilation=1, dropout_rate=0)
+        self.conv_block2 = Conv1dBlock(in_channels=14, out_channels=32, kernel_size=7, stride=1, padding=0, dilation=1, dropout_rate=0)
+        self.conv_block3 = Conv1dBlock(in_channels=30, out_channels=64, kernel_size=9, stride=1, padding=0, dilation=1, dropout_rate=0)
+        self.pooling = nn.AvgPool2d(kernel_size=3, stride=1)
+        self.regressor = nn.Linear(17580, 1, bias=True)
 
     def forward(self, x):
 
@@ -37,7 +38,10 @@ class CNNModel(nn.Module):
         x = self.pooling(x)
         x = self.conv_block2(x)
         x = self.pooling(x)
+        #x = self.conv_block3(x)
+        #x = self.pooling(x)
         x = x.view(x.size(0), -1)
+        #print(x.shape)
         output = self.regressor(x)
 
         return output.view(-1)

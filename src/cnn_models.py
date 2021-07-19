@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import timm
 
 
 class Conv1dBlock(nn.Module):
@@ -57,7 +56,6 @@ class CNNModel(nn.Module):
         self.pooling1 = nn.AvgPool2d(kernel_size=5, stride=1)
         self.pooling2 = nn.AvgPool2d(kernel_size=5, stride=1)
         self.regressor = nn.Linear(16296, 1, bias=True)
-
 
     def forward(self, x):
 

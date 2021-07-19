@@ -21,27 +21,26 @@ class OptiverDataset(Dataset):
         stock_id = int(sample['stock_id'])
         time_id = int(sample['time_id'])
 
-        book_means = torch.tensor([
+        book_means = np.array([
             0.99969482421875, 1.000321388244629, 0.9995064735412598, 1.0005191564559937,
             769.990177708821, 766.7345672818379, 959.3416027831918, 928.2202512713748
         ])
-        book_stds = torch.tensor([
+        book_stds = np.array([
             0.0036880988627672195, 0.003687119111418724, 0.0037009266670793295, 0.0036990800872445107,
             5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827
         ])
 
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
-        book_sequences = torch.as_tensor(book_sequences, dtype=torch.float)
         book_sequences = (book_sequences - book_means) / book_stds
-
-        wap1 = (book_sequences[:, 0] * book_sequences[:, 5] + book_sequences[:, 1] * book_sequences[:, 4]) / \
+        wap1 = (book_sequences[:, 0] * book_sequences[:, 5] + book_sequences[:, 1] * book_sequences[:, 4]) /\
                (book_sequences[:, 4] + book_sequences[: 5])
-        wap2 = (book_sequences[:, 2] * book_sequences[:, 7] + book_sequences[:, 3] * book_sequences[:, 6]) / \
+        wap2 = (book_sequences[:, 2] * book_sequences[:, 7] + book_sequences[:, 3] * book_sequences[:, 6]) /\
                (book_sequences[:, 6] + book_sequences[: 7])
-
-        print(wap1)
-        print(wap2)
+        print(wap1.shape)
+        print(wap2.shape)
         exit()
+        book_sequences = torch.as_tensor(book_sequences, dtype=torch.float)
+
         if self.dataset == 'train':
             target = sample['target']
             target = torch.as_tensor(target, dtype=torch.float)

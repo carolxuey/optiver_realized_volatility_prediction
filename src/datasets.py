@@ -34,10 +34,10 @@ class OptiverDataset(Dataset):
         book_sequences = torch.as_tensor(book_sequences, dtype=torch.float)
         book_sequences = (book_sequences - book_means) / book_stds
 
-        if self.dataset == 'train' or self.dataset == 'val':
+        if self.dataset == 'train':
             target = sample['target']
             target = torch.as_tensor(target, dtype=torch.float)
             return book_sequences, target
 
-        elif self.dataset['test']:
+        elif self.dataset == 'test':
             return book_sequences

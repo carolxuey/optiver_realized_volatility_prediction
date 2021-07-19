@@ -22,6 +22,7 @@ if __name__ == '__main__':
     df_test = pd.read_csv(
         '../data/test.csv',
         usecols=['stock_id', 'time_id'],
+        nrows=1,
         dtype=preprocessing_utils.train_test_dtypes['test']
     )
 

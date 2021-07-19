@@ -93,7 +93,7 @@ class Trainer:
 
         for fold in sorted(df_train['fold'].unique()):
 
-            print(f'Fold {fold}\n{"-" * 6}')
+            print(f'\nFold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
             train_dataset = OptiverDataset(df=df_train.loc[trn_idx, :], dataset='train')
@@ -105,7 +105,7 @@ class Trainer:
                 drop_last=False,
                 num_workers=self.training_parameters['num_workers'],
             )
-            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='val')
+            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='train')
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -173,17 +173,17 @@ class Trainer:
         test_dataset = OptiverDataset(df=df_test, dataset='test')
         test_loader = DataLoader(
             test_dataset,
-            batch_size=self.model_parameters['batch_size'],
+            batch_size=self.training_parameters['batch_size'],
             sampler=SequentialSampler(test_dataset),
             pin_memory=False,
             drop_last=False,
-            num_workers=0
+            num_workers=self.training_parameters['num_workers']
         )
 
         for fold in sorted(df_train['fold'].unique()):
 
             _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='val')
+            val_dataset = OptiverDataset(df=df_train.loc[val_idx, :], dataset='train')
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -195,7 +195,7 @@ class Trainer:
 
             training_utils.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
             device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-            model = torch.load(self.model_path, map_location=device)
+            model = torch.load(f'{self.model_path}/{self.model_name}_fold{fold}.pt', map_location=device)
 
             val_predictions = []
             with torch.no_grad():
@@ -211,7 +211,7 @@ class Trainer:
                     sequences = sequences.to(device)
                     output = model(sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
-                    test_predictions += output
+                    test_predictions += [output]
 
             df_train.loc[val_idx, f'{self.model_name}_predictions'] = val_predictions
             df_test[f'{self.model_name}_predictions'] += (np.array(test_predictions) / df_train['fold'].nunique())

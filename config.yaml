@@ -9,6 +9,7 @@ preprocessing:
 
 model:
   in_channels: 8
+  out_channels: 1
 
 training:
   amp: False

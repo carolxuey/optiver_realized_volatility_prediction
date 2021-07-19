@@ -12,7 +12,7 @@ class Conv1dBlock(nn.Module):
             nn.BatchNorm1d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, padding=padding, bias=True),
-            nn.BatchNorm2d(out_channels),
+            nn.BatchNorm1d(out_channels),
             nn.ReLU(inplace=True)
         )
 
@@ -45,7 +45,8 @@ class UNetModel(nn.Module):
     def __init__(self, in_channels, out_channels):
 
         super(UNetModel, self).__init__()
-        self.pooling = nn.AvgPool1d(kernel_size=2, stride=2)
+        self.pooling = nn.MaxPool1d(kernel_size=2, stride=2)
+        self.pooling_with_padding = nn.MaxPool1d(kernel_size=2, stride=2, padding=1)
 
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=64, kernel_size=3, stride=1, dilation=1, padding=1)
         self.conv_block2 = Conv1dBlock(in_channels=64, out_channels=128, kernel_size=3, stride=1, dilation=1, padding=1)
@@ -55,22 +56,25 @@ class UNetModel(nn.Module):
 
         self.upsample5 = Conv1dUpsample(scale_factor=2, in_channels=1024, out_channels=512, kernel_size=3, stride=1, dilation=1, padding=1)
         self.upsample_conv_block5 = Conv1dBlock(in_channels=1024, out_channels=512, kernel_size=3, stride=1, dilation=1, padding=1)
-        self.upsample4 = Conv1dUpsample(scale_factor=2, in_channels=512, out_channels=256, kernel_size=3, stride=1, dilation=1, padding=1)
+        self.upsample4 = Conv1dUpsample(scale_factor=2, in_channels=512, out_channels=256, kernel_size=3, stride=1, dilation=1, padding=0)
         self.upsample_conv_block4 = Conv1dBlock(in_channels=512, out_channels=256, kernel_size=3, stride=1, dilation=1, padding=1)
         self.upsample3 = Conv1dUpsample(scale_factor=2, in_channels=256, out_channels=128, kernel_size=3, stride=1, dilation=1, padding=1)
         self.upsample_conv_block3 = Conv1dBlock(in_channels=256, out_channels=128, kernel_size=3, stride=1, dilation=1, padding=1)
         self.upsample2 = Conv1dUpsample(scale_factor=2, in_channels=128, out_channels=64, kernel_size=3, stride=1, dilation=1, padding=1)
         self.upsample_conv_block2 = Conv1dBlock(in_channels=128, out_channels=64, kernel_size=3, stride=1, dilation=1, padding=1)
         self.conv1d = nn.Conv1d(64, out_channels, kernel_size=1, stride=1, padding=0)
+        self.regressor = nn.Linear(600, 1, bias=True)
 
     def forward(self, x):
+
+        x = torch.transpose(x, 1, 2)
 
         x1 = self.conv_block1(x)
         x2 = self.pooling(x1)
         x2 = self.conv_block2(x2)
         x3 = self.pooling(x2)
         x3 = self.conv_block3(x3)
-        x4 = self.pooling(x3)
+        x4 = self.pooling_with_padding(x3)
         x4 = self.conv_block4(x4)
         x5 = self.pooling(x4)
         x5 = self.conv_block5(x5)
@@ -92,7 +96,7 @@ class UNetModel(nn.Module):
         d2 = self.upsample_conv_block2(d2)
 
         d1 = self.conv1d(d2)
-        print(d1)
-        print(d1.shape)
+        d = d1.view(d1.size(0), -1)
+        output = self.regressor(d)
 
-        return d1
+        return output

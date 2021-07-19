@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from fastai.layers import SigmoidRange
 
 
 class Conv1dBlock(nn.Module):
@@ -30,6 +31,7 @@ class CNNModel(nn.Module):
         self.conv_block3 = Conv1dBlock(in_channels=30, out_channels=64, kernel_size=9, stride=1, padding=0, dilation=1, dropout_rate=0)
         self.pooling = nn.AvgPool2d(kernel_size=3, stride=1)
         self.regressor = nn.Linear(17580, 1, bias=True)
+        self.classifier = SigmoidRange(0, 0.1)
 
     def forward(self, x):
 
@@ -43,5 +45,6 @@ class CNNModel(nn.Module):
         x = x.view(x.size(0), -1)
         #print(x.shape)
         output = self.regressor(x)
+        output = self.classifier(output)
 
         return output.view(-1)

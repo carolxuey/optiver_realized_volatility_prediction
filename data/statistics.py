@@ -70,5 +70,5 @@ if __name__ == '__main__':
         dtype=preprocessing_utils.train_test_dtypes['train']
     )
 
-    get_book_statistics(df_train)
-    get_trade_statistics(df_train)
+    print(get_book_statistics(df_train))
+    print(get_trade_statistics(df_train))

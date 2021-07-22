@@ -1,5 +1,5 @@
-model_name: cnn
-model_path: ../models/cnn1
+model_name: resnet
+model_path: None #../models/cnn1
 
 preprocessing:
   split_type: stratified
@@ -9,7 +9,7 @@ preprocessing:
 
 model:
   in_channels: 8
-  out_channels: 1
+  #out_channels: 1
 
 training:
   amp: False

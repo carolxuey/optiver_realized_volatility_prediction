@@ -10,6 +10,7 @@ from datasets import OptiverDataset
 from rnn_models import RNNModel
 from cnn_models import CNNModel
 from unet import UNetModel
+from resnet import ResNetModel
 from visualize import draw_learning_curve
 
 
@@ -30,6 +31,8 @@ class Trainer:
             model = CNNModel(**self.model_parameters)
         elif self.model_name == 'unet':
             model = UNetModel(**self.model_parameters)
+        elif self.model_name == 'resnet':
+            model = ResNetModel(**self.model_parameters)
         else:
             model = None
 

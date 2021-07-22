@@ -29,7 +29,7 @@ def write_book_npy_files(df, dataset):
         os.makedirs(root_dir)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
-        df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
+        df_book = preprocessing_utils.read_book_data(dataset, stock_id, sort=True, forward_fill=True)
         stock_dir = os.path.join(root_dir, f'stock_{stock_id}')
         if not os.path.exists(stock_dir):
             os.makedirs(stock_dir)

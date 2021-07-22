@@ -39,7 +39,7 @@ trade_dtypes = {
 def read_book_data(dataset, stock_id, sort=False, forward_fill=False):
 
     """
-    Read book data of the selected stock
+    Read book data of the selected time bucket
 
     Parameters
     ----------
@@ -50,7 +50,7 @@ def read_book_data(dataset, stock_id, sort=False, forward_fill=False):
 
     Returns
     -------
-    df_book [pandas.DataFrame of shape (n_samples, 10)]: Book data of the selected stock
+    df_book [pandas.DataFrame of shape (n_updates or 600 if forward_fill is True, 10)]: Book data of the selected time bucket
     """
 
     df_book = pd.read_parquet(f'../data/book_{dataset}.parquet/stock_id={stock_id}')
@@ -71,28 +71,42 @@ def read_book_data(dataset, stock_id, sort=False, forward_fill=False):
     return df_book
 
 
-def read_trade_data(dataset, stock_id, sort=False):
+def read_trade_data(df, dataset, stock_id, sort=False, zero_fill=False):
 
     """
-    Read trade data of the selected stock
+    Read trade data of the selected time bucket
 
     Parameters
     ----------
     dataset (str): Name of the dataset (train or test)
     stock_id (int): ID of the stock (0 <= stock_id <= 126)
     sort (bool): Whether to sort book data by time_id and seconds_in_bucket or not
+    zero_fill (bool): Whether to reindex every time bucket to 600 seconds and zero fill missing values or not
 
     Returns
     -------
-    df_trade [pandas.DataFrame of shape (n_samples, 5)]: Trade data of the selected stock
+    df_trade [pandas.DataFrame of shape (n_trades or 600 if zero_fill is True, 5)]: Trade data of the selected time bucket
     """
 
     df_trade = pd.read_parquet(f'../data/trade_{dataset}.parquet/stock_id={stock_id}')
 
-    for column, dtype in trade_dtypes.items():
-        df_trade[column] = df_trade[column].astype(dtype)
+    if zero_fill:
+        stock_time_buckets = df.loc[df['stock_id'] == stock_id, 'time_id'].reset_index(drop=True)
+        missing_time_buckets = stock_time_buckets[~stock_time_buckets.isin(df_trade['time_id'])]
+        df_trade = df_trade.merge(missing_time_buckets, how='outer')
 
     if sort:
         df_trade.sort_values(by=['time_id', 'seconds_in_bucket'], inplace=True)
+
+    if zero_fill:
+        df_trade = df_trade.set_index(['time_id', 'seconds_in_bucket'])
+        df_trade = df_trade.reindex(
+            pd.MultiIndex.from_product([df_trade.index.levels[0], np.arange(0, 600)], names=['time_id', 'seconds_in_bucket']),
+        )
+        df_trade.fillna(0, inplace=True)
+        df_trade.reset_index(inplace=True)
+
+    for column, dtype in trade_dtypes.items():
+        df_trade[column] = df_trade[column].astype(dtype)
 
     return df_trade

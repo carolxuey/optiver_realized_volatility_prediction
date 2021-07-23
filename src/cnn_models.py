@@ -17,12 +17,18 @@ class Conv1dBlock(nn.Module):
             nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, padding=padding, bias=True),
             nn.BatchNorm1d(out_channels),
         )
+        self.downsample = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=(1,), stride=(1,), bias=False),
+            nn.BatchNorm1d(out_channels)
+        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
 
         output = self.conv_block(x)
         if self.skip_connection:
+            x = self.downsample(x)
+            print('downsample x', x.shape)
             output += x
         output = self.relu(output)
 
@@ -34,7 +40,7 @@ class CNNModel(nn.Module):
     def __init__(self, in_channels):
 
         super(CNNModel, self).__init__()
-        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=False)
+        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=True)
         self.pooling = nn.AvgPool2d(kernel_size=2, stride=1)
         self.head = nn.Sequential(
             nn.Linear(17580, 1, bias=True),

@@ -133,6 +133,13 @@ class Trainer:
                 betas=self.training_parameters['betas'],
                 weight_decay=self.training_parameters['weight_decay']
             )
+            scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer,
+                mode='min',
+                patience=self.training_parameters['reduce_lr_patience'],
+                factor=self.training_parameters['reduce_lr_factor'],
+                verbose=True
+            )
 
             early_stopping = False
             summary = {
@@ -148,6 +155,7 @@ class Trainer:
                 train_loss = self.train_fn(train_loader, model, criterion, optimizer, device)
                 val_loss = self.val_fn(val_loader, model, criterion, device)
                 print(f'Epoch {epoch} - Training Loss: {train_loss:.6f} - Validation Loss: {val_loss:.6f}')
+                scheduler.step(val_loss)
 
                 best_val_loss = np.min(summary['val_loss']) if len(summary['val_loss']) > 0 else np.inf
                 if val_loss < best_val_loss:

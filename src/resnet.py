@@ -31,17 +31,17 @@ class ResNetModel(nn.Module):
 
         super(ResNetModel, self).__init__()
         self.conv_block1 = nn.Sequential(
-            nn.Conv1d(in_channels=in_channels, out_channels=in_channels * 2, kernel_size=3, stride=1, dilation=1, padding=0, bias=True),
+            nn.Conv1d(in_channels=in_channels, out_channels=in_channels * 2, kernel_size=3, stride=1, dilation=1, padding=(0,), bias=True),
             nn.BatchNorm1d(in_channels * 2),
             nn.ReLU()
         )
         self.res_blocks = nn.Sequential(
-            ResidualBlock(channels=in_channels * 2, kernel_size=5, stride=1, dilation=1, padding=0),
-            ResidualBlock(channels=in_channels * 2, kernel_size=5, stride=1, dilation=1, padding=0),
+            ResidualBlock(channels=in_channels * 2, kernel_size=5, stride=1, dilation=1, padding=(2,)),
+            ResidualBlock(channels=in_channels * 2, kernel_size=5, stride=1, dilation=1, padding=(2,)),
             nn.AvgPool2d(2)
         )
         self.head = nn.Sequential(
-            nn.Linear(17580, 1, bias=True),
+            nn.Linear(2392, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -49,8 +49,8 @@ class ResNetModel(nn.Module):
 
         x = torch.transpose(x, 1, 2)
         x = self.conv_block1(x)
-        print(x.shape)
         x = self.res_blocks(x)
-        print(x.shape)
+        x = x.view(x.size(0), -1)
         x = self.head(x)
+
         return x

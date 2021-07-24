@@ -11,6 +11,9 @@ class OptiverDataset(Dataset):
 
         self.df = df
         self.dataset = dataset
+        self.transforms = {
+            'flip': 0.5
+        }
 
     def __len__(self):
         return len(self.df)
@@ -32,17 +35,18 @@ class OptiverDataset(Dataset):
 
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         book_sequences = (book_sequences - book_means) / book_stds
-
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
-
         sequences = np.hstack([book_sequences, trade_sequences])
-        sequences = torch.as_tensor(sequences, dtype=torch.float)
 
+        sequences = torch.as_tensor(sequences, dtype=torch.float)
+        print(sequences)
+        if np.random.rand() < self.transforms['flip']:
+            sequences = torch.flip(sequences, dims=[1])
+        print(sequences)
 
         if self.dataset == 'train':
             target = sample['target']
             target = torch.as_tensor(target, dtype=torch.float)
             return sequences, target
-
         elif self.dataset == 'test':
             return sequences

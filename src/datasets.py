@@ -12,7 +12,7 @@ class OptiverDataset(Dataset):
         self.df = df
         self.dataset = dataset
         self.transforms = {
-            'flip': 0.5
+            'flip': 0.
         }
 
     def __len__(self):
@@ -39,10 +39,8 @@ class OptiverDataset(Dataset):
         sequences = np.hstack([book_sequences, trade_sequences])
 
         sequences = torch.as_tensor(sequences, dtype=torch.float)
-        print(sequences)
         if np.random.rand() < self.transforms['flip']:
-            sequences = torch.flip(sequences, dims=[1])
-        print(sequences)
+            sequences = torch.flip(sequences, dims=[0])
 
         if self.dataset == 'train':
             target = sample['target']

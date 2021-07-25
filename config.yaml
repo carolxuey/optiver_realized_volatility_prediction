@@ -1,5 +1,5 @@
-model_name: resnet
-model_path: None #../models/cnn1
+model_name: cnn
+model_path: ../models/cnn1
 
 preprocessing:
   split_type: stratified
@@ -8,19 +8,21 @@ preprocessing:
   random_state: 42
 
 model:
-  in_channels: 8
+  in_channels: 11
   #out_channels: 1
 
 training:
   amp: False
-  learning_rate: 0.0001
+  learning_rate: 0.0005
   betas:
     - 0.9
     - 0.999
   weight_decay: 0
-  epochs: 100
+  epochs: 200
   batch_size: 256
-  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.1
+  early_stopping_patience: 20
   num_workers: 16
   random_state: 42
-  deterministic_cudnn: False
+  deterministic_cudnn: True

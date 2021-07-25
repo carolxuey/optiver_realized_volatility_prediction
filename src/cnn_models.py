@@ -41,12 +41,14 @@ class CNNModel(nn.Module):
         super(CNNModel, self).__init__()
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=True)
         self.conv_block2 = Conv1dBlock(in_channels=16, out_channels=32, skip_connection=True)
-        self.conv_block3 = Conv1dBlock(in_channels=32, out_channels=16, skip_connection=True)
-        self.conv_block4 = Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True)
-        self.conv_block5 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
+        self.conv_block3 = Conv1dBlock(in_channels=32, out_channels=64, skip_connection=True)
+        self.conv_block4 = Conv1dBlock(in_channels=64, out_channels=32, skip_connection=True)
+        self.conv_block5 = Conv1dBlock(in_channels=32, out_channels=16, skip_connection=True)
+        self.conv_block6 = Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True)
+        self.conv_block7 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
         self.pooling = nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,))
         self.head = nn.Sequential(
-            nn.Linear(256, 1, bias=True),
+            nn.Linear(600, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -62,6 +64,10 @@ class CNNModel(nn.Module):
         x = self.conv_block4(x)
         x = self.pooling(x)
         x = self.conv_block5(x)
+        x = self.pooling(x)
+        x = self.conv_block6(x)
+        x = self.pooling(x)
+        x = self.conv_block7(x)
         x = self.pooling(x)
         x = x.view(x.size(0), -1)
         output = self.head(x)

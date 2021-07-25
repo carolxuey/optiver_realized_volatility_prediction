@@ -50,20 +50,20 @@ class Trainer:
         else:
             scaler = None
 
-        for sequences, target in progress_bar:
-            sequences, target = sequences.to(device), target.to(device)
+        for stock_id, sequences, target in progress_bar:
+            stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
 
             if scaler is not None:
                 with torch.cuda.amp.autocast():
                     optimizer.zero_grad()
-                    output = model(sequences)
+                    output = model(stock_id, sequences)
                     loss = criterion(target, output)
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 optimizer.zero_grad()
-                output = model(sequences)
+                output = model(stock_id, sequences)
                 loss = criterion(target, output)
                 loss.backward()
                 optimizer.step()
@@ -82,9 +82,9 @@ class Trainer:
         losses = []
 
         with torch.no_grad():
-            for sequences, target in progress_bar:
-                sequences, target = sequences.to(device), target.to(device)
-                output = model(sequences)
+            for stock_id, sequences, target in progress_bar:
+                stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
+                output = model(stock_id, sequences)
                 loss = criterion(target, output)
                 losses.append(loss.item())
                 average_loss = np.mean(losses)
@@ -213,16 +213,16 @@ class Trainer:
 
             val_predictions = []
             with torch.no_grad():
-                for sequences, target in val_loader:
-                    sequences, target = sequences.to(device), target.to(device)
+                for stock_id, sequences, target in val_loader:
+                    stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
                     output = model(sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     val_predictions += output
 
             test_predictions = []
             with torch.no_grad():
-                for sequences in test_loader:
-                    sequences = sequences.to(device)
+                for stock_id, sequences in test_loader:
+                    stock_id, sequences = stock_id.to(device), sequences.to(device)
                     output = model(sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     test_predictions += [output]

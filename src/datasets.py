@@ -32,12 +32,15 @@ class OptiverDataset(Dataset):
             0.0036880988627672195, 0.003687119111418724, 0.0037009266670793295, 0.0036990800872445107,
             5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827
         ])
-
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         book_sequences = (book_sequences - book_means) / book_stds
-        trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
-        sequences = np.hstack([book_sequences, trade_sequences])
 
+        trade_means = np.array([0.14913657307624817, 52.6427545119817, 0.6223947385599582])
+        trade_stds = np.array([0.35622140765190125, 421.57388842752334, 3.358972898375689])
+        trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
+        trade_sequences = (trade_sequences - trade_means) / trade_stds
+
+        sequences = np.hstack([book_sequences, trade_sequences])
         sequences = torch.as_tensor(sequences, dtype=torch.float)
         if np.random.rand() < self.transforms['flip']:
             sequences = torch.flip(sequences, dims=[0])

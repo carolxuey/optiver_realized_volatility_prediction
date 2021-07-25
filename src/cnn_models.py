@@ -5,16 +5,16 @@ from fastai.layers import SigmoidRange
 
 class Conv1dBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size=(3,), stride=(1,), dilation=(1,), padding=(1,), skip_connection=False):
+    def __init__(self, in_channels, out_channels, kernel_size=(5,), stride=(1,), padding=(2,), skip_connection=False):
 
         super(Conv1dBlock, self).__init__()
         self.skip_connection = skip_connection
 
         self.conv_block = nn.Sequential(
-            nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, padding=padding, padding_mode='replicate', bias=True),
+            nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, padding_mode='replicate', bias=True),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(inplace=True),
-            nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, padding=padding, padding_mode='replicate', bias=True),
+            nn.Conv1d(out_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, padding_mode='replicate', bias=True),
             nn.BatchNorm1d(out_channels),
         )
         self.downsample = nn.Sequential(

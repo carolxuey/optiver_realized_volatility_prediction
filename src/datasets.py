@@ -38,7 +38,6 @@ class OptiverDataset(Dataset):
         trade_means = np.array([0.999971866607666, 352.9736760331942, 4.1732040971227145])
         trade_stds = np.array([0.004607073962688446, 1041.9441951057488, 7.79955795393431])
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
-        trade_sequences = (trade_sequences - trade_means) / trade_stds
 
         sequences = np.hstack([book_sequences, trade_sequences])
         sequences = torch.as_tensor(sequences, dtype=torch.float)

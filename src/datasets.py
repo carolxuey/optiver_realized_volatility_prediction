@@ -44,9 +44,11 @@ class OptiverDataset(Dataset):
         if np.random.rand() < self.transforms['flip']:
             sequences = torch.flip(sequences, dims=[0])
 
+        stock_id = torch.as_tensor(stock_id, dtype=torch.float)
+
         if self.dataset == 'train':
             target = sample['target']
             target = torch.as_tensor(target, dtype=torch.float)
-            return sequences, target
+            return stock_id, sequences, target
         elif self.dataset == 'test':
-            return sequences
+            return stock_id, sequences

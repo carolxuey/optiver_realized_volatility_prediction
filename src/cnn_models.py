@@ -5,10 +5,10 @@ from fastai.layers import SigmoidRange
 
 class Conv1dBlock(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size=(3,), stride=(1,), dilation=(1,), padding=(1,), connection=None):
+    def __init__(self, in_channels, out_channels, kernel_size=(3,), stride=(1,), dilation=(1,), padding=(1,), skip_connection=False):
 
         super(Conv1dBlock, self).__init__()
-        self.connection = connection
+        self.skip_connection = skip_connection
 
         self.conv_block = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, padding=padding, padding_mode='replicate', bias=True),
@@ -26,15 +26,11 @@ class Conv1dBlock(nn.Module):
     def forward(self, x):
 
         output = self.conv_block(x)
-
-        if self.connection == 'skip':
+        if self.skip_connection:
             x = self.downsample(x)
             output += x
-        elif self.connection == 'dense':
-            x = self.downsample(x)
-            output = torch.cat([output, x], dim=1)
-
         output = self.relu(output)
+
         return output
 
 
@@ -44,19 +40,19 @@ class CNNModel(nn.Module):
 
         super(CNNModel, self).__init__()
         self.conv_blocks = nn.Sequential(
-            Conv1dBlock(in_channels=in_channels, out_channels=16, connection='dense'),
+            Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=16, out_channels=32, connection='dense'),
+            Conv1dBlock(in_channels=16, out_channels=32, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=32, out_channels=64, connection='dense'),
+            Conv1dBlock(in_channels=32, out_channels=64, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=64, out_channels=32, connection='dense'),
+            Conv1dBlock(in_channels=64, out_channels=32, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=32, out_channels=16, connection='dense'),
+            Conv1dBlock(in_channels=32, out_channels=16, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=16, out_channels=8, connection='dense'),
+            Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
-            Conv1dBlock(in_channels=8, out_channels=1, connection='dense'),
+            Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True),
             nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,)),
         )
         self.head = nn.Sequential(

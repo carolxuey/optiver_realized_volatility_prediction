@@ -138,6 +138,7 @@ class Trainer:
                 mode='min',
                 patience=self.training_parameters['reduce_lr_patience'],
                 factor=self.training_parameters['reduce_lr_factor'],
+                min_lr=self.training_parameters['reduce_lr_min'],
                 verbose=True
             )
 
@@ -215,7 +216,7 @@ class Trainer:
             with torch.no_grad():
                 for stock_id, sequences, target in val_loader:
                     stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
-                    output = model(sequences)
+                    output = model(stock_id, sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     val_predictions += output
 
@@ -223,7 +224,7 @@ class Trainer:
             with torch.no_grad():
                 for stock_id, sequences in test_loader:
                     stock_id, sequences = stock_id.to(device), sequences.to(device)
-                    output = model(sequences)
+                    output = model(stock_id, sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     test_predictions += [output]
 

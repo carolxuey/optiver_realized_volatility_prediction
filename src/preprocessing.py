@@ -1,3 +1,4 @@
+from sklearn.preprocessing import LabelEncoder
 import validation
 
 
@@ -11,6 +12,12 @@ class PreprocessingPipeline:
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
+
+    def _label_encode(self):
+
+        le = LabelEncoder()
+        self.df_train['stock_id_encoded'] = le.fit_transform(self.df_train['stock_id'].values.reshape(-1, 1))
+        self.df_test['stock_id_encoded'] = le.transform(self.df_test['stock_id'].values.reshape(-1, 1))
 
     def _get_folds(self):
 
@@ -30,5 +37,6 @@ class PreprocessingPipeline:
     def transform(self):
 
         self._get_folds()
+        self._label_encode()
 
         return self.df_train, self.df_test

@@ -39,7 +39,7 @@ class CNNModel(nn.Module):
 
         super(CNNModel, self).__init__()
 
-        self.stock_embeddings = nn.Embedding(num_embeddings=112, embedding_dim=50)
+        self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=16)
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=True)
         self.conv_block2 = Conv1dBlock(in_channels=16, out_channels=32, skip_connection=True)
         self.conv_block3 = Conv1dBlock(in_channels=32, out_channels=64, skip_connection=True)
@@ -49,11 +49,11 @@ class CNNModel(nn.Module):
         self.conv_block7 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
         self.pooling = nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,))
         self.head = nn.Sequential(
-            nn.Linear(600, 1, bias=True),
+            nn.Linear(616, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
-    def forward(self, stock_id, sequences):
+    def forward(self, stock_ids, sequences):
 
         x = torch.transpose(sequences, 1, 2)
         x = self.conv_block1(x)
@@ -71,11 +71,8 @@ class CNNModel(nn.Module):
         x = self.conv_block7(x)
         x = self.pooling(x)
         x = x.view(x.size(0), -1)
-        embedded_stock_ids = self.stock_embeddings(stock_id)
-        print(embedded_stock_ids)
-        print(embedded_stock_ids.shape)
-        print(x.shape)
-        exit()
+        embedded_stock_ids = self.stock_embeddings(stock_ids)
+        x = torch.cat([x, embedded_stock_ids], dim=1)
         output = self.head(x)
 
         return output.view(-1)

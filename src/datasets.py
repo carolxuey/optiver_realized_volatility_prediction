@@ -37,18 +37,14 @@ class Optiver2DDataset(Dataset):
         time_id = int(sample['time_id'])
 
         book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
-        book_wap1 = (book_sequences[:, 0] * book_sequences[:, 5] + book_sequences[:, 1] * book_sequences[: 4]) /\
+        book_wap1 = (book_sequences[:, 0] * book_sequences[:, 5] + book_sequences[:, 1] * book_sequences[:, 4]) /\
                     (book_sequences[:, 4] + book_sequences[:, 5])
-        book_wap1_log_returns = np.log(book_wap1).diff()
-        print(book_wap1)
-        print(book_wap1.shape)
-        print(book_wap1_log_returns)
-        print(book_wap1_log_returns.shape)
+        book_wap1_log_returns = np.diff(np.log(book_wap1), prepend=[0]).reshape(-1, 1)
 
         book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
 
-        sequences = np.hstack([book_sequences, trade_sequences, book_wap1, book_wap1_log_returns])
+        sequences = np.hstack([book_sequences, trade_sequences, book_wap1_log_returns])
         sequences = torch.as_tensor(sequences, dtype=torch.float)
 
         if np.random.rand() < self.transforms['flip']:

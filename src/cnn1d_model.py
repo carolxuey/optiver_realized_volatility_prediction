@@ -48,8 +48,11 @@ class CNN1DModel(nn.Module):
         self.conv_block6 = Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True)
         self.conv_block7 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
         self.pooling = nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,))
+        self.linear = nn.Linear(616, 256, bias=True)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.25)
         self.head = nn.Sequential(
-            nn.Linear(616, 1, bias=True),
+            nn.Linear(256, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -73,6 +76,7 @@ class CNN1DModel(nn.Module):
         x = x.view(x.size(0), -1)
         embedded_stock_ids = self.stock_embeddings(stock_ids)
         x = torch.cat([x, embedded_stock_ids], dim=1)
+        x = self.dropout(self.relu(self.linear(x)))
         output = self.head(x)
 
         return output.view(-1)

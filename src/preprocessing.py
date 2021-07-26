@@ -16,8 +16,8 @@ class PreprocessingPipeline:
     def _label_encode(self):
 
         le = LabelEncoder()
-        self.df_train['stock_id_encoded'] = le.fit_transform(self.df_train['stock_id'].values.reshape(-1, 1))
-        self.df_test['stock_id_encoded'] = le.transform(self.df_test['stock_id'].values.reshape(-1, 1))
+        self.df_train['stock_id_encoded'] = le.fit_transform(self.df_train['stock_id'].values)
+        self.df_test['stock_id_encoded'] = le.transform(self.df_test['stock_id'].values)
 
     def _get_folds(self):
 

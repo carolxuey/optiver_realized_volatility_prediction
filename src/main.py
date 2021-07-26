@@ -2,6 +2,7 @@ import yaml
 import argparse
 import pandas as pd
 
+import path_utils
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
 from trainer import Trainer
@@ -16,11 +17,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     df_train = pd.read_csv(
-        '../data/train.csv',
+        f'{path_utils.DATA_PATH}/train.csv',
         dtype=preprocessing_utils.train_test_dtypes['train']
     )
     df_test = pd.read_csv(
-        '../data/test.csv',
+        f'{path_utils.DATA_PATH}/test.csv',
         usecols=['stock_id', 'time_id'],
         nrows=1,
         dtype=preprocessing_utils.train_test_dtypes['test']

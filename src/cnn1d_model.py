@@ -33,11 +33,11 @@ class Conv1dBlock(nn.Module):
         return output
 
 
-class CNNModel(nn.Module):
+class CNN1DModel(nn.Module):
 
     def __init__(self, in_channels):
 
-        super(CNNModel, self).__init__()
+        super(CNN1DModel, self).__init__()
 
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=16)
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=16, skip_connection=True)

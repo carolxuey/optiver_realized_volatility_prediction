@@ -63,6 +63,7 @@ def get_trade_statistics(df):
     df_trades = pd.DataFrame(columns=trade_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
+        df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=False)
         df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
         df_trade['price_squared_log_returns'] = np.log(df_trade['price'] / df_trade.groupby('time_id')['price'].shift(1)) ** 2
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)

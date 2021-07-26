@@ -55,7 +55,7 @@ def get_trade_statistics(df):
     df_trades = pd.DataFrame(columns=trade_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
-        df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
+        df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=False)
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)
 
     means = df_trades.mean(axis=0).to_dict()
@@ -70,5 +70,5 @@ if __name__ == '__main__':
         dtype=preprocessing_utils.train_test_dtypes['train']
     )
 
-    print(get_book_statistics(df_train))
+    #print(get_book_statistics(df_train))
     print(get_trade_statistics(df_train))

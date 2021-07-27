@@ -39,6 +39,7 @@ def get_book_statistics(df):
         df_book['wap2_squared_log_returns'] = np.log(df_book['wap2'] / df_book.groupby('time_id')['wap2'].shift(1)) ** 2
         df_books = pd.concat([df_books, df_book.loc[:, book_features]], axis=0, ignore_index=True)
 
+    df_books.fillna(0, inplace=True)
     means = df_books.mean(axis=0).to_dict()
     stds = df_books.std(axis=0).to_dict()
     return means, stds
@@ -68,6 +69,7 @@ def get_trade_statistics(df):
         df_trade['price_squared_log_returns'] = np.log(df_trade['price'] / df_trade.groupby('time_id')['price'].shift(1)) ** 2
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)
 
+    df_trades.fillna(0, inplace=True)
     means = df_trades.mean(axis=0).to_dict()
     stds = df_trades.std(axis=0).to_dict()
     return means, stds

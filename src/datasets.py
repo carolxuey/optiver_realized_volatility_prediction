@@ -54,6 +54,8 @@ class Optiver2DDataset(Dataset):
         ])
         book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
+        trade_price_log_returns = np.diff(np.log1p(trade_sequences[:, 0]), prepend=trade_sequences[0, 0])
+        trade_sequences = np.hstack([trade_sequences, trade_price_log_returns.reshape(-1, 1)])
         sequences = np.hstack([book_sequences, trade_sequences])
         sequences = torch.as_tensor(sequences, dtype=torch.float)
 

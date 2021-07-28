@@ -78,8 +78,8 @@ class CNN1DModel(nn.Module):
         x = self.pooling(x)
         x = x.view(x.size(0), -1)
         embedded_stock_ids = self.stock_embeddings(stock_ids)
-        x = torch.cat([x, embedded_stock_ids], dim=1)
-        x = self.dropout(self.relu(self.linear(x)))
+        x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
+        x = self.relu(self.linear(x))
         output = self.head(x)
 
         return output.view(-1)

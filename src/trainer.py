@@ -8,6 +8,7 @@ import path_utils
 import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
+from cnn2d_model import CNN2DModel
 from visualize import draw_learning_curve
 
 
@@ -24,6 +25,8 @@ class Trainer:
 
         if self.model_name == 'cnn1d':
             model = CNN1DModel(**self.model_parameters)
+        elif self.model_name == 'cnn2d':
+            model = CNN2DModel(**self.model_parameters)
         else:
             model = None
 

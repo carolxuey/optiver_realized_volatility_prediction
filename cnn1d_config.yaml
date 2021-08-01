@@ -1,5 +1,5 @@
-model_name: cnn2d
-model_path: ../models/cnn2d
+model_name: cnn1d
+model_path: ../models/cnn1d
 
 preprocessing:
   split_type: stratified
@@ -8,7 +8,7 @@ preprocessing:
   random_state: 42
 
 model:
-  in_channels: 1
+  in_channels: 16
 
 training:
   amp: False

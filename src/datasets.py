@@ -38,7 +38,7 @@ class Optiver2DDataset(Dataset):
         stock_id = int(sample['stock_id'])
         time_id = int(sample['time_id'])
 
-        book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
+        book_sequences = np.load(f'{path_utils.DATA_PATH}/book_{self.dataset}/book_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         book_wap1 = (book_sequences[:, 0] * book_sequences[:, 5] + book_sequences[:, 1] * book_sequences[:, 4]) /\
                     (book_sequences[:, 4] + book_sequences[:, 5])
         book_wap2 = (book_sequences[:, 2] * book_sequences[:, 7] + book_sequences[:, 3] * book_sequences[:, 6]) /\
@@ -53,7 +53,7 @@ class Optiver2DDataset(Dataset):
             book_wap2_log_returns.reshape(-1, 1)
         ])
         book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
-        trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
+        trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_{self.dataset}/trade_{self.dataset}/stock_{stock_id}/time_{time_id}.npy')
         trade_price_log_returns = np.diff(np.log1p(trade_sequences[:, 0]), prepend=trade_sequences[0, 0])
         trade_sequences = np.hstack([trade_sequences, trade_price_log_returns.reshape(-1, 1)])
         sequences = np.hstack([book_sequences, trade_sequences])

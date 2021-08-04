@@ -25,7 +25,8 @@ def get_book_statistics(df):
     book_features = [
         'bid_price1', 'ask_price1', 'bid_price2', 'ask_price2',
         'bid_size1', 'ask_size1', 'bid_size2', 'ask_size2',
-        'wap1', 'wap2', 'wap1_squared_log_returns', 'wap2_squared_log_returns'
+        'wap1', 'wap2', 'wap1_squared_log_returns', 'wap2_squared_log_returns',
+        'wap1_diff', 'wap2_diff'
     ]
     df_books = pd.DataFrame(columns=book_features)
 
@@ -37,6 +38,8 @@ def get_book_statistics(df):
                           (df_book['bid_size2'] + df_book['ask_size2'])
         df_book['wap1_squared_log_returns'] = np.log(df_book['wap1'] / df_book.groupby('time_id')['wap1'].shift(1)) ** 2
         df_book['wap2_squared_log_returns'] = np.log(df_book['wap2'] / df_book.groupby('time_id')['wap2'].shift(1)) ** 2
+        df_book['wap1_diff'] = df_book.groupby('time_id')['wap1'].diff()
+        df_book['wap2_diff'] = df_book.groupby('time_id')['wap2'].diff()
         df_books = pd.concat([df_books, df_book.loc[:, book_features]], axis=0, ignore_index=True)
 
     df_books.fillna(0, inplace=True)

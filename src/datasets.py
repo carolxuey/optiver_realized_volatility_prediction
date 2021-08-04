@@ -12,7 +12,7 @@ class Optiver2DDataset(Dataset):
         self.df = df
         self.dataset = dataset
         self.transforms = {
-            'flip': 0.1,
+            'flip': 0,
             'normalize': {
                 'book_means': np.array([
                     0.99969482421875, 1.000321388244629, 0.9995064735412598, 1.0005191564559937,

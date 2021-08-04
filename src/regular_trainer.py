@@ -212,5 +212,11 @@ class RegularTrainer:
 
             del _, val_idx, val_dataset, val_loader, val_predictions, model
 
+        print(f'\n{"-" * 30}')
+        for stock_id in df_train['stock_id'].unique():
+            df_stock = df_train.loc[df_train['stock_id'] == stock_id, :]
+            stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
+            print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
+
         oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
         print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')

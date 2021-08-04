@@ -125,10 +125,7 @@ def get_stock_book_statistics(df):
 
 if __name__ == '__main__':
 
-    df_train = pd.read_csv(
-        './train.csv',
-        dtype=preprocessing_utils.train_test_dtypes['train']
-    )
+    df_train = pd.read_csv('./train.csv')
 
     df_train_stock_means, df_train_stock_stds = get_stock_book_statistics(df_train)
     df_train_stock_means.to_csv('stock_means.csv', index=False)

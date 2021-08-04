@@ -1,14 +1,15 @@
-model_name: cnn2d
-model_path: ../models/cnn2d
+model_name: cnn1d
+model_path: ../models/cnn1d_nested
+model_type: nested
 
 preprocessing:
-  split_type: stratified
+  split_type: nested
   n_splits: 5
   shuffle: True
   random_state: 42
 
 model:
-  in_channels: 1
+  in_channels: 12
 
 training:
   amp: False

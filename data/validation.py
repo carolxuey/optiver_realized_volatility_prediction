@@ -56,7 +56,7 @@ def get_group_folds(df, n_splits, verbose=False):
 def get_random_folds(df, n_splits, shuffle=True, random_state=42, verbose=False):
 
     """
-    Create a column of fold numbers with specified configuration of k-fold on given partial training set
+    Create a column of fold numbers with specified configuration of k-fold on given training set
 
     Parameters
     ----------

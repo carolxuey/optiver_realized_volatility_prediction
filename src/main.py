@@ -5,7 +5,8 @@ import pandas as pd
 import path_utils
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
-from trainer import Trainer
+from regular_trainer import RegularTrainer
+from nested_trainer import NestedTrainer
 
 
 if __name__ == '__main__':
@@ -39,14 +40,22 @@ if __name__ == '__main__':
     print(f'Processed Test Set Shape: {df_test.shape}')
     print(f'Processed Test Set Memory Usage: {df_test.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
-    trainer = Trainer(
-        model_name=config['model_name'],
-        model_path=config['model_path'],
-        model_parameters=config['model'],
-        training_parameters=config['training']
-    )
+    if config['model_type'] == 'regular':
+        trainer = RegularTrainer(
+            model_name=config['model_name'],
+            model_path=config['model_path'],
+            model_parameters=config['model'],
+            training_parameters=config['training']
+        )
+    else:
+        trainer = NestedTrainer(
+            model_name=config['model_name'],
+            model_path=config['model_path'],
+            model_parameters=config['model'],
+            training_parameters=config['training']
+        )
 
     if args.mode == 'train':
-        trainer.train_and_validate(df_train)
+        trainer.train_and_validate(df_train, train_stock=0)
     elif args.mode == 'inference':
         trainer.inference(df_train, df_test)

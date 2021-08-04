@@ -7,7 +7,7 @@ sys.path.append('..')
 from src import preprocessing_utils
 
 
-def get_book_statistics(df):
+def get_all_book_statistics(df):
 
     """
     Calculate means and stds of book sequences on entire training set after forward filling
@@ -31,6 +31,7 @@ def get_book_statistics(df):
     df_books = pd.DataFrame(columns=book_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
         df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
         df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) /\
                           (df_book['bid_size1'] + df_book['ask_size1'])
@@ -40,6 +41,7 @@ def get_book_statistics(df):
         df_book['wap2_squared_log_returns'] = np.log(df_book['wap2'] / df_book.groupby('time_id')['wap2'].shift(1)) ** 2
         df_book['wap1_diff'] = df_book.groupby('time_id')['wap1'].diff()
         df_book['wap2_diff'] = df_book.groupby('time_id')['wap2'].diff()
+
         df_books = pd.concat([df_books, df_book.loc[:, book_features]], axis=0, ignore_index=True)
 
     df_books.fillna(0, inplace=True)
@@ -48,7 +50,7 @@ def get_book_statistics(df):
     return means, stds
 
 
-def get_trade_statistics(df):
+def get_all_trade_statistics(df):
 
     """
     Calculate means and stds of trade sequences on entire training set after zero filling
@@ -67,9 +69,10 @@ def get_trade_statistics(df):
     df_trades = pd.DataFrame(columns=trade_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
-        df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=False)
+
         df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
         df_trade['price_squared_log_returns'] = np.log(df_trade['price'] / df_trade.groupby('time_id')['price'].shift(1)) ** 2
+
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)
 
     df_trades.fillna(0, inplace=True)
@@ -78,12 +81,55 @@ def get_trade_statistics(df):
     return means, stds
 
 
+def get_stock_book_statistics(df):
+
+    """
+    Calculate means and stds of book sequences of every stock after forward filling
+
+    Parameters
+    ----------
+    df [pandas.DataFrame of shape (n_samples, 3)]: Training set
+
+    Returns
+    -------
+    df_stock_means [pandas.DataFrame of shape (n_stocks, n_features)]: Means of features for every every stock
+    df_stock_stds [pandas.DataFrame of shape (n_stocks, n_features)]: Stds of features for every every stock
+    """
+
+    book_features = [
+        'bid_price1', 'ask_price1', 'bid_price2', 'ask_price2',
+        'bid_size1', 'ask_size1', 'bid_size2', 'ask_size2',
+        'wap1', 'wap2', 'wap1_squared_log_returns', 'wap2_squared_log_returns'
+    ]
+    df_stock_means = pd.DataFrame(columns=['stock_id'] + book_features)
+    df_stock_stds = pd.DataFrame(columns=['stock_id'] + book_features)
+
+    for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
+        df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
+        df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) /\
+                          (df_book['bid_size1'] + df_book['ask_size1'])
+        df_book['wap2'] = (df_book['bid_price2'] * df_book['ask_size2'] + df_book['ask_price2'] * df_book['bid_size2']) /\
+                          (df_book['bid_size2'] + df_book['ask_size2'])
+        df_book['wap1_squared_log_returns'] = np.log(df_book['wap1'] / df_book.groupby('time_id')['wap1'].shift(1)) ** 2
+        df_book['wap2_squared_log_returns'] = np.log(df_book['wap2'] / df_book.groupby('time_id')['wap2'].shift(1)) ** 2
+
+        stock_means = df_book.loc[:, book_features].mean().to_dict()
+        stock_means['stock_id'] = stock_id
+        stock_stds = df_book.loc[:, book_features].std().to_dict()
+        stock_stds['stock_id'] = stock_id
+        df_stock_means = df_stock_means.append(stock_means, ignore_index=True)
+        df_stock_stds = df_stock_stds.append(stock_stds, ignore_index=True)
+
+    df_stock_means['stock_id'] = df_stock_means['stock_id'].astype(np.uint8)
+    df_stock_stds['stock_id'] = df_stock_stds['stock_id'].astype(np.uint8)
+    return df_stock_means, df_stock_stds
+
+
 if __name__ == '__main__':
 
-    df_train = pd.read_csv(
-        './train.csv',
-        dtype=preprocessing_utils.train_test_dtypes['train']
-    )
+    df_train = pd.read_csv('./train.csv')
 
-    print(get_book_statistics(df_train))
-    print(get_trade_statistics(df_train))
+    df_train_stock_means, df_train_stock_stds = get_stock_book_statistics(df_train)
+    df_train_stock_means.to_csv('stock_means.csv', index=False)
+    df_train_stock_stds.to_csv('stock_stds.csv', index=False)

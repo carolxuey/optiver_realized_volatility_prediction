@@ -71,15 +71,8 @@ def write_trade_npy_files(df, dataset):
 
 if __name__ == '__main__':
 
-    df_train = pd.read_csv(
-        './train.csv',
-        dtype=preprocessing_utils.train_test_dtypes['train']
-    )
-    df_test = pd.read_csv(
-        'test.csv',
-        usecols=['stock_id', 'time_id'],
-        dtype=preprocessing_utils.train_test_dtypes['test']
-    )
+    df_train = pd.read_csv('./train.csv')
+    df_test = pd.read_csv('test.csv', usecols=['stock_id', 'time_id'])
 
     write_book_npy_files(df_train, 'train')
     write_book_npy_files(df_test, 'test')

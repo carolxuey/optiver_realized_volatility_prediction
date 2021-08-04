@@ -1,5 +1,7 @@
+import pandas as pd
 from sklearn.preprocessing import LabelEncoder
-import validation
+
+import path_utils
 
 
 class PreprocessingPipeline:
@@ -21,18 +23,8 @@ class PreprocessingPipeline:
 
     def _get_folds(self):
 
-        if self.split_type == 'stratified':
-            validation.get_stratified_folds(
-                df_train=self.df_train,
-                n_splits=self.n_splits,
-                shuffle=self.shuffle,
-                random_state=self.random_state
-            )
-        elif self.split_type == 'group':
-            validation.get_group_folds(
-                df_train=self.df_train,
-                n_splits=self.n_splits
-            )
+        df_folds = pd.read_csv(f'{path_utils.DATA_PATH}/folds.csv')
+        self.df_train['fold'] = df_folds[f'fold_{self.split_type}']
 
     def transform(self):
 

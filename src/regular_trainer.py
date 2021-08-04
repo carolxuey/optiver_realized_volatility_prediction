@@ -6,13 +6,13 @@ import torch.optim as optim
 
 import path_utils
 import training_utils
-from datasets import Optiver2DDataset
-from cnn1d_model import CNN1DModel
+from datasets import Optiver2DRegularDataset
+from cnn1d_model import CNN1DRegularModel
 from cnn2d_model import CNN2DModel
 from visualize import draw_learning_curve
 
 
-class Trainer:
+class RegularTrainer:
 
     def __init__(self, model_name, model_path, model_parameters, training_parameters):
 
@@ -23,12 +23,12 @@ class Trainer:
 
     def get_model(self):
 
+        model = None
+
         if self.model_name == 'cnn1d':
-            model = CNN1DModel(**self.model_parameters)
+            model = CNN1DRegularModel(**self.model_parameters)
         elif self.model_name == 'cnn2d':
             model = CNN2DModel(**self.model_parameters)
-        else:
-            model = None
 
         return model
 
@@ -96,7 +96,7 @@ class Trainer:
             print(f'\nFold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            train_dataset = Optiver2DDataset(df=df_train.loc[trn_idx, :], dataset='train')
+            train_dataset = Optiver2DRegularDataset(df=df_train.loc[trn_idx, :])
             train_loader = DataLoader(
                 train_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -105,7 +105,7 @@ class Trainer:
                 drop_last=False,
                 num_workers=self.training_parameters['num_workers'],
             )
-            val_dataset = Optiver2DDataset(df=df_train.loc[val_idx, :], dataset='train')
+            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :])
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -172,66 +172,3 @@ class Trainer:
                         path=f'{path_utils.MODELS_PATH}/{self.model_name}_fold{fold}_learning_curve.png'
                     )
                     early_stopping = True
-
-    def inference(self, df_train, df_test):
-
-        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}\n')
-        df_train[f'{self.model_name}_predictions'] = 0
-        df_test[f'{self.model_name}_predictions'] = 0
-
-        test_dataset = Optiver2DDataset(df=df_test, dataset='test')
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.training_parameters['batch_size'],
-            sampler=SequentialSampler(test_dataset),
-            pin_memory=False,
-            drop_last=False,
-            num_workers=self.training_parameters['num_workers']
-        )
-
-        for fold in sorted(df_train['fold'].unique()):
-
-            _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            val_dataset = Optiver2DDataset(df=df_train.loc[val_idx, :], dataset='train')
-            val_loader = DataLoader(
-                val_dataset,
-                batch_size=self.training_parameters['batch_size'],
-                sampler=SequentialSampler(val_dataset),
-                pin_memory=True,
-                drop_last=False,
-                num_workers=self.training_parameters['num_workers'],
-            )
-
-            training_utils.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
-            device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-            model = self.get_model()
-            model.load_state_dict(torch.load(f'{self.model_path}/{self.model_name}_fold{fold}.pt'))
-            model.to(device)
-            model.eval()
-
-            val_predictions = []
-            with torch.no_grad():
-                for stock_id, sequences, target in val_loader:
-                    stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
-                    output = model(stock_id, sequences)
-                    output = output.detach().cpu().numpy().squeeze().tolist()
-                    val_predictions += output
-
-            test_predictions = []
-            with torch.no_grad():
-                for stock_id, sequences in test_loader:
-                    stock_id, sequences = stock_id.to(device), sequences.to(device)
-                    output = model(stock_id, sequences)
-                    output = output.detach().cpu().numpy().squeeze().tolist()
-                    test_predictions += [output]
-
-            df_train.loc[val_idx, f'{self.model_name}_predictions'] = val_predictions
-            df_test[f'{self.model_name}_predictions'] += (np.array(test_predictions) / df_train['fold'].nunique())
-            fold_score = training_utils.rmspe_metric(df_train.loc[val_idx, 'target'], val_predictions)
-            print(f'Fold {fold} - RMSPE: {fold_score:.6}')
-
-            del _, val_idx, val_dataset, val_loader, val_predictions, test_predictions, model
-        del test_dataset, test_loader
-
-        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
-        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')

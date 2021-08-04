@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import path_utils
 
 
-class Optiver2DTrainDataset(Dataset):
+class Optiver2DRegularDataset(Dataset):
 
     def __init__(self, df):
 
@@ -70,7 +70,7 @@ class Optiver2DTrainDataset(Dataset):
         return stock_id_encoded, sequences, target
 
 
-class Optiver2DStockDataset(Dataset):
+class Optiver2DNestedDataset(Dataset):
 
     def __init__(self, df, stock_id, trade_data=False):
 

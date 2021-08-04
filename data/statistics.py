@@ -30,6 +30,7 @@ def get_all_book_statistics(df):
     df_books = pd.DataFrame(columns=book_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
         df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
         df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) /\
                           (df_book['bid_size1'] + df_book['ask_size1'])
@@ -37,6 +38,7 @@ def get_all_book_statistics(df):
                           (df_book['bid_size2'] + df_book['ask_size2'])
         df_book['wap1_squared_log_returns'] = np.log(df_book['wap1'] / df_book.groupby('time_id')['wap1'].shift(1)) ** 2
         df_book['wap2_squared_log_returns'] = np.log(df_book['wap2'] / df_book.groupby('time_id')['wap2'].shift(1)) ** 2
+
         df_books = pd.concat([df_books, df_book.loc[:, book_features]], axis=0, ignore_index=True)
 
     df_books.fillna(0, inplace=True)
@@ -64,8 +66,10 @@ def get_all_trade_statistics(df):
     df_trades = pd.DataFrame(columns=trade_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
         df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
         df_trade['price_squared_log_returns'] = np.log(df_trade['price'] / df_trade.groupby('time_id')['price'].shift(1)) ** 2
+
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)
 
     df_trades.fillna(0, inplace=True)
@@ -85,8 +89,8 @@ def get_stock_book_statistics(df):
 
     Returns
     -------
-    means (dict): Means of specified features on entire training set
-    stds (dict): Stds of specified features on entire training set
+    df_stock_means [pandas.DataFrame of shape (n_stocks, n_features)]: Means of features for every every stock
+    df_stock_stds [pandas.DataFrame of shape (n_stocks, n_features)]: Stds of features for every every stock
     """
 
     book_features = [
@@ -98,6 +102,7 @@ def get_stock_book_statistics(df):
     df_stock_stds = pd.DataFrame(columns=['stock_id'] + book_features)
 
     for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
         df_book = preprocessing_utils.read_book_data('train', stock_id, sort=True, forward_fill=True)
         df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) /\
                           (df_book['bid_size1'] + df_book['ask_size1'])

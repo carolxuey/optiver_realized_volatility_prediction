@@ -79,16 +79,29 @@ class Optiver2DNestedDataset(Dataset):
     def __init__(self, df, stock_id, trade_data=False):
 
         self.df = df.loc[df['stock_id'] == stock_id, :].reset_index(drop=True)
+
         self.df_book_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_means.csv')
         self.df_book_stock_means = self.df_book_stock_means.loc[self.df_book_stock_means['stock_id'] == stock_id].iloc[:, 1:]
         self.df_book_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_stds.csv')
         self.df_book_stock_stds = self.df_book_stock_stds.loc[self.df_book_stock_stds['stock_id'] == stock_id].iloc[:, 1:]
+
+        self.df_trade_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_means.csv')
+        self.df_trade_stock_means['price'] = 0
+        self.df_trade_stock_means['price_squared_log_returns'] = 0
+        self.df_trade_stock_means = self.df_trade_stock_means.loc[self.df_trade_stock_means['stock_id'] == stock_id].iloc[:, 1:]
+        self.df_trade_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_stds.csv')
+        self.df_trade_stock_stds['price'] = 1
+        self.df_trade_stock_stds['price_squared_log_returns'] = 1
+        self.df_trade_stock_stds = self.df_trade_stock_stds.loc[self.df_trade_stock_stds['stock_id'] == stock_id].iloc[:, 1:]
+
         self.trade_data = trade_data
         self.transforms = {
             'flip': 0.,
             'normalize': {
-                'book_means': self.df_stock_means.values.reshape(-1),
-                'book_stds': self.df_stock_stds.values.reshape(-1),
+                'book_means': self.df_book_stock_means.values.reshape(-1),
+                'book_stds': self.df_book_stock_stds.values.reshape(-1),
+                'trade_means': self.df_trade_stock_means.values.reshape(-1),
+                'trade_stds': self.df_trade_stock_stds.values.reshape(-1),
             }
         }
 
@@ -124,7 +137,7 @@ class Optiver2DNestedDataset(Dataset):
             trade_price_log1p = np.log1p(trade_sequences[:, 0])
             trade_price_log1p_returns = np.diff(trade_price_log1p, prepend=trade_price_log1p[0])
             trade_sequences = np.hstack([
-                trade_sequences[:, 0].reshape(-1, 1),
+                trade_sequences.reshape(-1, 1),
                 trade_price_log1p_returns.reshape(-1, 1)
             ])
             sequences = np.hstack([book_sequences, trade_sequences])

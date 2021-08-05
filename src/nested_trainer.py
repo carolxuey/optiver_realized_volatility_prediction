@@ -184,3 +184,70 @@ class NestedTrainer:
                             path=f'{model_stock_dir}/{self.model_name}_fold{fold}_learning_curve.png'
                         )
                         early_stopping = True
+
+    def inference(self, df_train, inference_stock=None):
+
+        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}\n')
+        df_train[f'{self.model_name}_nested_predictions'] = 0
+
+        model_root_dir = self.model_path
+        if not os.path.exists(model_root_dir):
+            os.makedirs(model_root_dir)
+
+        for stock_id in sorted(df_train['stock_id'].unique()):
+
+            if inference_stock is not None:
+                if inference_stock != stock_id:
+                    continue
+
+            model_stock_dir = os.path.join(model_root_dir, f'stock_{stock_id}')
+            if not os.path.exists(model_stock_dir):
+                print('Model directory {model_stock_dir} is not found')
+                continue
+
+            df_stock = df_train.loc[df_train['stock_id'] == stock_id, :].reset_index(drop=True)
+
+            for fold in sorted(df_stock['fold'].unique()):
+
+                _, val_idx = df_stock.loc[df_stock['fold'] != fold].index, df_stock.loc[df_stock['fold'] == fold].index
+                val_dataset = Optiver2DNestedDataset(df=df_stock.loc[val_idx, :], stock_id=stock_id)
+                val_loader = DataLoader(
+                    val_dataset,
+                    batch_size=self.training_parameters['batch_size'],
+                    sampler=SequentialSampler(val_dataset),
+                    pin_memory=True,
+                    drop_last=False,
+                    num_workers=self.training_parameters['num_workers'],
+                )
+
+                training_utils.set_seed(self.training_parameters['random_state'], deterministic_cudnn=self.training_parameters['deterministic_cudnn'])
+                device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+                model = self.get_model()
+                model.load_state_dict(torch.load(f'{model_stock_dir}/{self.model_name}_fold{fold}.pt'))
+                model.to(device)
+                model.eval()
+
+                val_predictions = []
+                with torch.no_grad():
+                    for sequences, target in val_loader:
+                        sequences, target = sequences.to(device), target.to(device)
+                        output = model(sequences)
+                        output = output.detach().cpu().numpy().squeeze().tolist()
+                        val_predictions += output
+
+                df_stock.loc[val_idx, f'{self.model_name}_nested_predictions'] = val_predictions
+                fold_score = training_utils.rmspe_metric(df_train.loc[val_idx, 'target'], val_predictions)
+                print(f'Fold {fold} - RMSPE: {fold_score:.6}')
+
+                del _, val_idx, val_dataset, val_loader, val_predictions, model
+
+            df_train.loc[df_train['stock_id'] == stock_id, f'{self.model_name}_nested_predictions'] = df_stock[f'{self.model_name}_nested_predictions'].values
+
+        print(f'\n{"-" * 30}')
+        for stock_id in df_train['stock_id'].unique():
+            df_stock = df_train.loc[df_train['stock_id'] == stock_id, :]
+            stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
+            print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
+
+        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
+        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')

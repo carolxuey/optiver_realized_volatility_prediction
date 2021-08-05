@@ -108,7 +108,7 @@ class NestedTrainer:
                 print(f'\nFold {fold} - Stock {stock_id}\n{"-" * 16}')
 
                 trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-                train_dataset = Optiver2DNestedDataset(df=df_train.loc[trn_idx, :], stock_id=stock_id)
+                train_dataset = Optiver2DNestedDataset(df=df_train.loc[trn_idx, :], stock_id=stock_id, trade_data=True)
                 train_loader = DataLoader(
                     train_dataset,
                     batch_size=self.training_parameters['batch_size'],
@@ -117,7 +117,7 @@ class NestedTrainer:
                     drop_last=False,
                     num_workers=self.training_parameters['num_workers'],
                 )
-                val_dataset = Optiver2DNestedDataset(df=df_train.loc[val_idx, :], stock_id=stock_id)
+                val_dataset = Optiver2DNestedDataset(df=df_train.loc[val_idx, :], stock_id=stock_id, trade_data=True)
                 val_loader = DataLoader(
                     val_dataset,
                     batch_size=self.training_parameters['batch_size'],

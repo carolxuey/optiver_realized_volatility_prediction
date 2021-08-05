@@ -126,10 +126,49 @@ def get_stock_book_statistics(df):
     return df_stock_means, df_stock_stds
 
 
+def get_stock_trade_statistics(df):
+
+    """
+    Calculate means and stds of trade sequences of every stock after zero filling
+
+    Parameters
+    ----------
+    df [pandas.DataFrame of shape (n_samples, 3)]: Training set
+
+    Returns
+    -------
+    df_stock_means [pandas.DataFrame of shape (n_stocks, n_features)]: Means of features for every every stock
+    df_stock_stds [pandas.DataFrame of shape (n_stocks, n_features)]: Stds of features for every every stock
+    """
+
+    trade_features = ['price', 'size', 'order_count', 'price_squared_log_returns']
+    df_stock_means = pd.DataFrame(columns=['stock_id'] + trade_features)
+    df_stock_stds = pd.DataFrame(columns=['stock_id'] + trade_features)
+
+    for stock_id in tqdm(sorted(df['stock_id'].unique())):
+
+        df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
+        df_trade['price_squared_log_returns'] = np.log(df_trade['price'] / df_trade.groupby('time_id')['price'].shift(1)) ** 2
+
+        stock_means = df_trade.loc[:, trade_features].mean().to_dict()
+        stock_means['stock_id'] = stock_id
+        stock_stds = df_trade.loc[:, trade_features].std().to_dict()
+        stock_stds['stock_id'] = stock_id
+        df_stock_means = df_stock_means.append(stock_means, ignore_index=True)
+        df_stock_stds = df_stock_stds.append(stock_stds, ignore_index=True)
+
+    df_stock_means['stock_id'] = df_stock_means['stock_id'].astype(np.uint8)
+    df_stock_stds['stock_id'] = df_stock_stds['stock_id'].astype(np.uint8)
+    return df_stock_means, df_stock_stds
+
+
 if __name__ == '__main__':
 
     df_train = pd.read_csv('./train.csv')
 
-    df_train_stock_means, df_train_stock_stds = get_stock_book_statistics(df_train)
-    df_train_stock_means.to_csv('stock_means.csv', index=False)
-    df_train_stock_stds.to_csv('stock_stds.csv', index=False)
+    df_book_stock_means, df_book_stock_stds = get_stock_book_statistics(df_train)
+    df_book_stock_means.to_csv('book_stock_means.csv', index=False)
+    df_book_stock_stds.to_csv('book_stock_stds.csv', index=False)
+    df_trade_stock_means, df_trade_stock_stds = get_stock_trade_statistics(df_train)
+    df_trade_stock_means.to_csv('trade_stock_means.csv', index=False)
+    df_trade_stock_stds.to_csv('trade_stock_stds.csv', index=False)

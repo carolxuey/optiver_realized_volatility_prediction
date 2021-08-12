@@ -33,11 +33,11 @@ class Conv2dBlock(nn.Module):
         return output
 
 
-class CNN2DModel(nn.Module):
+class CNN2DRegularModel(nn.Module):
 
     def __init__(self, in_channels):
 
-        super(CNN2DModel, self).__init__()
+        super(CNN2DRegularModel, self).__init__()
 
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=16)
         self.conv_block1 = Conv2dBlock(in_channels=in_channels, out_channels=2, skip_connection=True)
@@ -70,6 +70,40 @@ class CNN2DModel(nn.Module):
         embedded_stock_ids = self.stock_embeddings(stock_ids)
         x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
         x = self.relu(self.linear(x))
+        output = self.head(x)
+
+        return output.view(-1)
+
+
+class CNN2DNestedModel(nn.Module):
+
+    def __init__(self, in_channels):
+
+        super(CNN2DNestedModel, self).__init__()
+
+        self.conv_block1 = Conv2dBlock(in_channels=in_channels, out_channels=2, skip_connection=True)
+        self.conv_block2 = Conv2dBlock(in_channels=2, out_channels=4, skip_connection=True)
+        self.conv_block3 = Conv2dBlock(in_channels=4, out_channels=2, skip_connection=True)
+        self.conv_block4 = Conv2dBlock(in_channels=2, out_channels=1, skip_connection=True)
+        self.pooling = nn.AvgPool2d(kernel_size=(3, 1), stride=(1, 1), padding=(1, 0))
+        self.head = nn.Sequential(
+            nn.Linear(256, 1, bias=True),
+            SigmoidRange(0, 0.1)
+        )
+
+    def forward(self, stock_ids, sequences):
+
+        x = torch.transpose(sequences, 1, 2)
+        x = torch.unsqueeze(x, 1)
+        x = self.conv_block1(x)
+        x = self.pooling(x)
+        x = self.conv_block2(x)
+        x = self.pooling(x)
+        x = self.conv_block3(x)
+        x = self.pooling(x)
+        x = self.conv_block4(x)
+        x = self.pooling(x)
+        x = x.view(x.size(0), -1)
         output = self.head(x)
 
         return output.view(-1)

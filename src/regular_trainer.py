@@ -175,7 +175,7 @@ class RegularTrainer:
 
     def inference(self, df_train):
 
-        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}\n')
+        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}')
         df_train[f'{self.model_name}_predictions'] = 0
 
         for fold in sorted(df_train['fold'].unique()):
@@ -212,7 +212,7 @@ class RegularTrainer:
 
             del _, val_idx, val_dataset, val_loader, val_predictions, model
 
-        print(f'\n{"-" * 30}')
+        print(f'{"-" * 30}')
         for stock_id in df_train['stock_id'].unique():
             df_stock = df_train.loc[df_train['stock_id'] == stock_id, :]
             stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])

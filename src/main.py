@@ -11,7 +11,7 @@ from nested_trainer import NestedTrainer
 
 if __name__ == '__main__':
 
-    config = yaml.load(open('../config.yaml', 'r'), Loader=yaml.FullLoader)
+    config = yaml.load(open('../rnn_config.yaml', 'r'), Loader=yaml.FullLoader)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', type=str)
@@ -56,6 +56,6 @@ if __name__ == '__main__':
         )
 
     if args.mode == 'train':
-        trainer.train_and_validate(df_train, train_stock=0)
+        trainer.train_and_validate(df_train)
     elif args.mode == 'inference':
         trainer.inference(df_train, df_test)

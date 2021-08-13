@@ -9,6 +9,7 @@ import training_utils
 from datasets import Optiver2DRegularDataset
 from cnn1d_model import CNN1DRegularModel
 from cnn2d_model import CNN2DRegularModel
+from rnn_model import RNNRegularModel
 from visualize import draw_learning_curve
 
 
@@ -29,6 +30,8 @@ class RegularTrainer:
             model = CNN1DRegularModel(**self.model_parameters)
         elif self.model_name == 'cnn2d':
             model = CNN2DRegularModel(**self.model_parameters)
+        elif  self.model_name == 'rnn':
+            model = RNNRegularModel(**self.model_parameters)
 
         return model
 

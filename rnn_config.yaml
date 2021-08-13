@@ -1,5 +1,5 @@
-model_name: cnn1d
-model_path: ../models/cnn1d_nested
+model_name: rnn
+model_path: ../models/cnn1d_regular
 model_type: regular
 
 preprocessing:
@@ -9,7 +9,7 @@ preprocessing:
   random_state: 42
 
 model:
-  in_channels: 12
+  in_channels: 16
 
 training:
   amp: False

@@ -1,6 +1,6 @@
 model_name: cnn1d
 model_path: ../models/cnn1d_nested
-model_type: nested
+model_type: regular
 
 preprocessing:
   split_type: nested

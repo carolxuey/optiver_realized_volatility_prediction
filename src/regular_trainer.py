@@ -8,7 +8,7 @@ import path_utils
 import training_utils
 from datasets import Optiver2DRegularDataset
 from cnn1d_model import CNN1DRegularModel
-from cnn2d_model import CNN2DModel
+from cnn2d_model import CNN2DRegularModel
 from visualize import draw_learning_curve
 
 
@@ -28,7 +28,7 @@ class RegularTrainer:
         if self.model_name == 'cnn1d':
             model = CNN1DRegularModel(**self.model_parameters)
         elif self.model_name == 'cnn2d':
-            model = CNN2DModel(**self.model_parameters)
+            model = CNN2DRegularModel(**self.model_parameters)
 
         return model
 
@@ -96,7 +96,7 @@ class RegularTrainer:
             print(f'\nFold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            train_dataset = Optiver2DRegularDataset(df=df_train.loc[trn_idx, :])
+            train_dataset = Optiver2DRegularDataset(df=df_train.loc[trn_idx, :], normalization='local', flip_probability=0.)
             train_loader = DataLoader(
                 train_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -105,7 +105,7 @@ class RegularTrainer:
                 drop_last=False,
                 num_workers=self.training_parameters['num_workers'],
             )
-            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :])
+            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :], normalization='local', flip_probability=0.)
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -181,7 +181,7 @@ class RegularTrainer:
         for fold in sorted(df_train['fold'].unique()):
 
             _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :])
+            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :], normalization='local', flip_probability=0.)
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],

@@ -31,10 +31,11 @@ class RNNRegularModel(nn.Module):
 
     def forward(self, stock_ids, sequences):
 
-        sequences = self.batch_norm(sequences)
-        h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
-        c_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
-        lstm_output, (h_n, c_n) = self.lstm(sequences, (h_n0, c_n0))
+        x = torch.transpose(sequences, 1, 2)
+        x = self.batch_norm(x)
+        h_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+        c_n0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(self.device)
+        lstm_output, (h_n, c_n) = self.lstm(x, (h_n0, c_n0))
         avg_pooled_features = torch.mean(lstm_output, 1)
         embedded_stock_ids = self.stock_embeddings(stock_ids)
         x = torch.cat([avg_pooled_features, self.dropout(embedded_stock_ids)], dim=1)

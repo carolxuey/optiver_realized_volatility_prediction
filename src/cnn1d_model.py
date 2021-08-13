@@ -8,6 +8,7 @@ class Conv1dBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=(5,), stride=(1,), padding=(2,), skip_connection=False):
 
         super(Conv1dBlock, self).__init__()
+
         self.skip_connection = skip_connection
         self.conv_block = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, padding_mode='replicate', bias=True),

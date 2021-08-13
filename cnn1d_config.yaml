@@ -1,8 +1,9 @@
 model_name: cnn1d
-model_path: ../models/cnn1d
+model_path: ../models/cnn1d_regular
+model_type: regular
 
 preprocessing:
-  split_type: stratified
+  split_type: nested
   n_splits: 5
   shuffle: True
   random_state: 42

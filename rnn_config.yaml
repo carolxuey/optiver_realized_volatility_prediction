@@ -1,5 +1,5 @@
-model_name: cnn1d
-model_path: ../models/cnn1d_nested
+model_name: rnn
+model_path: ../models/cnn1d_regular
 model_type: regular
 
 preprocessing:
@@ -9,7 +9,11 @@ preprocessing:
   random_state: 42
 
 model:
+<<<<<<< HEAD:config.yaml
   in_channels: 14
+=======
+  in_channels: 16
+>>>>>>> eb4bd8653e06f25af7e7106939078960694f6d2c:rnn_config.yaml
 
 training:
   amp: False

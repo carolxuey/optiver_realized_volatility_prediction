@@ -1,5 +1,5 @@
 model_name: rnn
-model_path: ../models/cnn1d_regular
+model_path: ../models/rnn_regular
 model_type: regular
 
 preprocessing:
@@ -9,7 +9,9 @@ preprocessing:
   random_state: 42
 
 model:
-  in_channels: 16
+  input_size: 16
+  hidden_size: 64
+  num_layer: 1
 
 training:
   amp: False

@@ -3,11 +3,11 @@ import torch.nn as nn
 from fastai.layers import SigmoidRange
 
 
-class RNNRegularModel(nn.Module):
+class RNNModel(nn.Module):
 
     def __init__(self, input_size, hidden_size, num_layers):
 
-        super(RNNRegularModel, self).__init__()
+        super(RNNModel, self).__init__()
 
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -32,7 +32,6 @@ class RNNRegularModel(nn.Module):
 
     def forward(self, sequences):
 
-        self.sequences = self.batch_norm(sequences)
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         c_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         lstm_output, (h_n, c_n) = self.lstm(sequences, (h_n0, c_n0))

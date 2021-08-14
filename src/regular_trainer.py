@@ -7,9 +7,9 @@ import torch.optim as optim
 import path_utils
 import training_utils
 from datasets import Optiver2DRegularDataset
-from cnn1d_model import CNN1DRegularModel
-from cnn2d_model import CNN2DRegularModel
-from rnn_model import RNNRegularModel
+from cnn1d_model import CNN1DModel
+from cnn2d_model import CNN2DModel
+from rnn_model import RNNModel
 from visualize import draw_learning_curve
 
 
@@ -27,11 +27,11 @@ class RegularTrainer:
         model = None
 
         if self.model_name == 'cnn1d':
-            model = CNN1DRegularModel(**self.model_parameters)
+            model = CNN1DModel(**self.model_parameters)
         elif self.model_name == 'cnn2d':
-            model = CNN2DRegularModel(**self.model_parameters)
+            model = CNN2DModel(**self.model_parameters)
         elif  self.model_name == 'rnn':
-            model = RNNRegularModel(**self.model_parameters)
+            model = RNNModel(**self.model_parameters)
 
         return model
 
@@ -47,20 +47,20 @@ class RegularTrainer:
         else:
             scaler = None
 
-        for stock_id, sequences, target in progress_bar:
-            stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
+        for sequences, target in progress_bar:
+            sequences, target = sequences.to(device), target.to(device)
 
             if scaler is not None:
                 with torch.cuda.amp.autocast():
                     optimizer.zero_grad()
-                    output = model(stock_id, sequences)
+                    output = model(sequences)
                     loss = criterion(target, output)
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 optimizer.zero_grad()
-                output = model(stock_id, sequences)
+                output = model(sequences)
                 loss = criterion(target, output)
                 loss.backward()
                 optimizer.step()
@@ -79,9 +79,9 @@ class RegularTrainer:
         losses = []
 
         with torch.no_grad():
-            for stock_id, sequences, target in progress_bar:
-                stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
-                output = model(stock_id, sequences)
+            for sequences, target in progress_bar:
+                sequences, target = sequences.to(device), target.to(device)
+                output = model(sequences)
                 loss = criterion(target, output)
                 losses.append(loss.item())
                 average_loss = np.mean(losses)

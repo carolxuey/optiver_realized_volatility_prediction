@@ -25,6 +25,17 @@ class Optiver2DRegularDataset(Dataset):
                 5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827,
                 0.003689893218043926, 0.00370745215558702, 6.618708642293018e-07, 1.2508970015188411e-06
             ])
+            # Normalizing only size sequences with global means and stds across stocks
+            book_means_only_size = np.array([
+                0, 0, 0, 0,
+                769.990177708821, 766.7345672818379, 959.3416027831918, 928.2202512713748,
+                0, 0, 0, 0
+            ])
+            book_stds_only_size = np.array([
+                1, 1, 1, 1,
+                5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827,
+                1, 1, 1, 1
+            ])
             # Not normalizing trade price and trade price log returns because of the sparsity
             trade_means = np.array([0, 352.9736760331942, 4.1732040971227145, 0])
             trade_stds = np.array([1, 1041.9441951057488, 7.79955795393431, 1])
@@ -32,8 +43,8 @@ class Optiver2DRegularDataset(Dataset):
             self.transforms = {
                 'flip': flip_probability,
                 'normalize': {
-                    'book_means': book_means,
-                    'book_stds': book_stds,
+                    'book_means': book_means_only_size,
+                    'book_stds': book_stds_only_size,
                     'trade_means': trade_means,
                     'trade_stds': trade_stds
                 }
@@ -132,10 +143,9 @@ class Optiver2DRegularDataset(Dataset):
         if np.random.rand() < self.transforms['flip']:
             sequences = torch.flip(sequences, dims=[0])
 
-        stock_id_encoded = torch.as_tensor(sample['stock_id_encoded'], dtype=torch.long)
         target = sample['target']
         target = torch.as_tensor(target, dtype=torch.float)
-        return stock_id_encoded, sequences, target
+        return sequences, target
 
 
 class Optiver2DNestedDataset(Dataset):

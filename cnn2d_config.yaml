@@ -1,17 +1,14 @@
-model_name: rnn
-model_path: ../models/rnn_regular
-model_type: regular
+model_name: cnn2d
+model_path: ../models/cnn2d
 
 preprocessing:
-  split_type: nested
+  split_type: stratified
   n_splits: 5
   shuffle: True
   random_state: 42
 
 model:
-  input_size: 16
-  hidden_size: 128
-  num_layers: 1
+  in_channels: 1
 
 training:
   amp: False

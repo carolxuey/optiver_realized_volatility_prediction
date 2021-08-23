@@ -6,15 +6,19 @@ preprocessing:
   n_splits: 5
   shuffle: True
   random_state: 42
-  channels: [8, 9, 10, 11]
+  channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
   normalization: global
   flip_probability: 0.
   use_stock_id: True
 
 model:
-  in_channels: 4
+  in_channels: 12
+  out_channels: 128
   use_stock_id: True
   stock_embedding_dims: 16
+  alpha: 1
+  beta: 1
+  phi: 1
 
 training:
   amp: False
@@ -24,7 +28,7 @@ training:
     - 0.999
   weight_decay: 0
   epochs: 200
-  batch_size: 256
+  batch_size: 32
   reduce_lr_patience: 5
   reduce_lr_factor: 0.25
   reduce_lr_min: 0.000001

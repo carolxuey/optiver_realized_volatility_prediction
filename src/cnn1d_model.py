@@ -56,7 +56,7 @@ class CNN1DModel(nn.Module):
         self.conv_block6 = Conv1dBlock(in_channels=32, out_channels=16, skip_connection=True)
         self.conv_block7 = Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True)
         self.conv_block8 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
-        self.pooling = nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,))
+        self.pooling = nn.AvgPool1d(kernel_size=(3,), stride=(1,), padding=(1,))
         self.head = nn.Sequential(
             nn.Linear(256, 1, bias=True),
             SigmoidRange(0, 0.1)

@@ -81,6 +81,7 @@ class CNN1DModel(nn.Module):
         x = self.pooling(x)
         x = self.conv_block8(x)
         x = self.pooling(x)
+        x = x.view(x.size(0), -1)
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)

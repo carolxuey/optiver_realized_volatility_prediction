@@ -1,15 +1,17 @@
 model_name: cnn1d
-model_path: ../models/cnn1d_regular
-model_type: regular
+model_path: ../models/cnn1d
 
 preprocessing:
-  split_type: nested
+  split_type: group
   n_splits: 5
   shuffle: True
   random_state: 42
+  channels: [8, 9, 10, 11]
+  normalization: global
+  flip_probability: 0.
 
 model:
-  in_channels: 16
+  in_channels: 4
 
 training:
   amp: False

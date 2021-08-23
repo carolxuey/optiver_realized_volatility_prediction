@@ -5,8 +5,7 @@ import pandas as pd
 import path_utils
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
-from regular_trainer import RegularTrainer
-#from nested_trainer import NestedTrainer
+from trainer import Trainer
 
 
 if __name__ == '__main__':
@@ -31,7 +30,10 @@ if __name__ == '__main__':
     preprocessing_pipeline = PreprocessingPipeline(
         df_train,
         df_test,
-        **config['preprocessing']
+        config['preprocessing']['split_type'],
+        config['preprocessing']['n_splits'],
+        config['preprocessing']['shuffle'],
+        config['preprocessing']['random_state']
     )
     df_train, df_test = preprocessing_pipeline.transform()
 
@@ -40,22 +42,15 @@ if __name__ == '__main__':
     print(f'Processed Test Set Shape: {df_test.shape}')
     print(f'Processed Test Set Memory Usage: {df_test.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
-    if config['model_type'] == 'regular':
-        trainer = RegularTrainer(
-            model_name=config['model_name'],
-            model_path=config['model_path'],
-            model_parameters=config['model'],
-            training_parameters=config['training']
-        )
-    else:
-        trainer = NestedTrainer(
-            model_name=config['model_name'],
-            model_path=config['model_path'],
-            model_parameters=config['model'],
-            training_parameters=config['training']
-        )
+    trainer = Trainer(
+        model_name=config['model_name'],
+        model_path=config['model_path'],
+        preprocessing_parameters=config['preprocessing'],
+        model_parameters=config['model'],
+        training_parameters=config['training']
+    )
 
     if args.mode == 'train':
         trainer.train_and_validate(df_train)
     elif args.mode == 'inference':
-        trainer.inference(df_train, df_test)
+        trainer.inference(df_train)

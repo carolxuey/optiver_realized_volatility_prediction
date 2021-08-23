@@ -6,19 +6,18 @@ import torch.optim as optim
 
 import path_utils
 import training_utils
-from datasets import Optiver2DRegularDataset
+from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
-from cnn2d_model import CNN2DModel
-from rnn_model import RNNModel
 from visualize import draw_learning_curve
 
 
-class RegularTrainer:
+class Trainer:
 
-    def __init__(self, model_name, model_path, model_parameters, training_parameters):
+    def __init__(self, model_name, model_path, preprocessing_parameters, model_parameters, training_parameters):
 
         self.model_name = model_name
         self.model_path = model_path
+        self.preprocessing_parameters = preprocessing_parameters
         self.model_parameters = model_parameters
         self.training_parameters = training_parameters
 
@@ -28,10 +27,6 @@ class RegularTrainer:
 
         if self.model_name == 'cnn1d':
             model = CNN1DModel(**self.model_parameters)
-        elif self.model_name == 'cnn2d':
-            model = CNN2DModel(**self.model_parameters)
-        elif  self.model_name == 'rnn':
-            model = RNNModel(**self.model_parameters)
 
         return model
 
@@ -47,20 +42,26 @@ class RegularTrainer:
         else:
             scaler = None
 
-        for sequences, target in progress_bar:
-            sequences, target = sequences.to(device), target.to(device)
+        for stock_id_encoded, sequences, target in progress_bar:
+            stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
 
             if scaler is not None:
                 with torch.cuda.amp.autocast():
                     optimizer.zero_grad()
-                    output = model(sequences)
+                    if self.preprocessing_parameters['use_stock_id']:
+                        output = model(stock_id_encoded, sequences)
+                    else:
+                        output = model(sequences)
                     loss = criterion(target, output)
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 optimizer.zero_grad()
-                output = model(sequences)
+                if self.preprocessing_parameters['use_stock_id']:
+                    output = model(stock_id_encoded, sequences)
+                else:
+                    output = model(sequences)
                 loss = criterion(target, output)
                 loss.backward()
                 optimizer.step()
@@ -79,9 +80,12 @@ class RegularTrainer:
         losses = []
 
         with torch.no_grad():
-            for sequences, target in progress_bar:
-                sequences, target = sequences.to(device), target.to(device)
-                output = model(sequences)
+            for stock_id_encoded, sequences, target in progress_bar:
+                stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
+                if self.preprocessing_parameters['use_stock_id']:
+                    output = model(stock_id_encoded, sequences)
+                else:
+                    output = model(sequences)
                 loss = criterion(target, output)
                 losses.append(loss.item())
                 average_loss = np.mean(losses)
@@ -92,14 +96,19 @@ class RegularTrainer:
 
     def train_and_validate(self, df_train):
 
-        print(f'\n{"-" * 26}\nRunning Model for Training\n{"-" * 26}\n')
+        print(f'\n{"-" * 26}\nRunning {self.model_name.upper()} for Training\n{"-" * 26}\n')
 
         for fold in sorted(df_train['fold'].unique()):
 
             print(f'\nFold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            train_dataset = Optiver2DRegularDataset(df=df_train.loc[trn_idx, :], normalization='local', flip_probability=0.)
+            train_dataset = Optiver2DDataset(
+                df=df_train.loc[trn_idx, :],
+                channels=self.preprocessing_parameters['channels'],
+                normalization=self.preprocessing_parameters['normalization'],
+                flip_probability=self.preprocessing_parameters['flip_probability']
+            )
             train_loader = DataLoader(
                 train_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -108,7 +117,12 @@ class RegularTrainer:
                 drop_last=False,
                 num_workers=self.training_parameters['num_workers'],
             )
-            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :], normalization='local', flip_probability=0.)
+            val_dataset = Optiver2DDataset(
+                df=df_train.loc[val_idx, :],
+                channels=self.preprocessing_parameters['channels'],
+                normalization=self.preprocessing_parameters['normalization'],
+                flip_probability=0.
+            )
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -178,13 +192,18 @@ class RegularTrainer:
 
     def inference(self, df_train):
 
-        print(f'\n{"-" * 27}\nRunning Model for Inference\n{"-" * 27}')
+        print(f'\n{"-" * 27}\nRunning {self.model_name.upper()} for Inference\n{"-" * 27}')
         df_train[f'{self.model_name}_predictions'] = 0
 
         for fold in sorted(df_train['fold'].unique()):
 
             _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
-            val_dataset = Optiver2DRegularDataset(df=df_train.loc[val_idx, :], normalization='local', flip_probability=0.)
+            val_dataset = Optiver2DDataset(
+                df=df_train.loc[val_idx, :],
+                channels=self.preprocessing_parameters['channels'],
+                normalization=self.preprocessing_parameters['normalization'],
+                flip_probability=0.
+            )
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.training_parameters['batch_size'],
@@ -203,9 +222,12 @@ class RegularTrainer:
 
             val_predictions = []
             with torch.no_grad():
-                for stock_id, sequences, target in val_loader:
-                    stock_id, sequences, target = stock_id.to(device), sequences.to(device), target.to(device)
-                    output = model(stock_id, sequences)
+                for stock_id_encoded, sequences, target in val_loader:
+                    stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
+                    if self.preprocessing_parameters['use_stock_id']:
+                        output = model(stock_id_encoded, sequences)
+                    else:
+                        output = model(sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     val_predictions += output
 

@@ -36,26 +36,33 @@ class Conv1dBlock(nn.Module):
 
 class CNN1DModel(nn.Module):
 
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, use_stock_id, stock_embedding_dims):
 
         super(CNN1DModel, self).__init__()
 
-        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=32, skip_connection=True)
-        self.conv_block2 = Conv1dBlock(in_channels=32, out_channels=64, skip_connection=True)
-        self.conv_block3 = Conv1dBlock(in_channels=64, out_channels=128, skip_connection=True)
-        self.conv_block4 = Conv1dBlock(in_channels=128, out_channels=64, skip_connection=True)
+        # Stock embeddings
+        self.use_stock_id = use_stock_id
+        self.stock_embedding_dims = stock_embedding_dims
+        self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=self.stock_embedding_dims)
+        self.dropout = nn.Dropout(0.25)
+        self.linear = nn.Linear(600 + self.stock_embedding_dims, 256, bias=True)
+
+        # Convolutional layers
+        self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=8, skip_connection=True)
+        self.conv_block2 = Conv1dBlock(in_channels=8, out_channels=16, skip_connection=True)
+        self.conv_block3 = Conv1dBlock(in_channels=16, out_channels=32, skip_connection=True)
+        self.conv_block4 = Conv1dBlock(in_channels=32, out_channels=64, skip_connection=True)
         self.conv_block5 = Conv1dBlock(in_channels=64, out_channels=32, skip_connection=True)
         self.conv_block6 = Conv1dBlock(in_channels=32, out_channels=16, skip_connection=True)
         self.conv_block7 = Conv1dBlock(in_channels=16, out_channels=8, skip_connection=True)
         self.conv_block8 = Conv1dBlock(in_channels=8, out_channels=1, skip_connection=True)
         self.pooling = nn.AvgPool2d(kernel_size=(3,), stride=(1,), padding=(1,))
         self.head = nn.Sequential(
-            nn.Linear(600, 1, bias=True),
-            nn.Dropout(0.25),
+            nn.Linear(256, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
-    def forward(self, sequences):
+    def forward(self, stock_ids, sequences):
 
         x = torch.transpose(sequences, 1, 2)
         x = self.conv_block1(x)
@@ -74,7 +81,12 @@ class CNN1DModel(nn.Module):
         x = self.pooling(x)
         x = self.conv_block8(x)
         x = self.pooling(x)
-        x = x.view(x.size(0), -1)
+
+        if self.use_stock_id:
+            embedded_stock_ids = self.stock_embeddings(stock_ids)
+            x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
+
+        x = self.relu(self.linear(x))
         output = self.head(x)
 
         return output.view(-1)

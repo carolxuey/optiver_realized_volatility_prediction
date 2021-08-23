@@ -48,20 +48,14 @@ class Trainer:
             if scaler is not None:
                 with torch.cuda.amp.autocast():
                     optimizer.zero_grad()
-                    if self.preprocessing_parameters['use_stock_id']:
-                        output = model(stock_id_encoded, sequences)
-                    else:
-                        output = model(sequences)
+                    output = model(stock_id_encoded, sequences)
                     loss = criterion(target, output)
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 optimizer.zero_grad()
-                if self.preprocessing_parameters['use_stock_id']:
-                    output = model(stock_id_encoded, sequences)
-                else:
-                    output = model(sequences)
+                output = model(stock_id_encoded, sequences)
                 loss = criterion(target, output)
                 loss.backward()
                 optimizer.step()
@@ -82,10 +76,7 @@ class Trainer:
         with torch.no_grad():
             for stock_id_encoded, sequences, target in progress_bar:
                 stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
-                if self.preprocessing_parameters['use_stock_id']:
-                    output = model(stock_id_encoded, sequences)
-                else:
-                    output = model(sequences)
+                output = model(stock_id_encoded, sequences)
                 loss = criterion(target, output)
                 losses.append(loss.item())
                 average_loss = np.mean(losses)
@@ -224,10 +215,7 @@ class Trainer:
             with torch.no_grad():
                 for stock_id_encoded, sequences, target in val_loader:
                     stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
-                    if self.preprocessing_parameters['use_stock_id']:
-                        output = model(stock_id_encoded, sequences)
-                    else:
-                        output = model(sequences)
+                    output = model(stock_id_encoded, sequences)
                     output = output.detach().cpu().numpy().squeeze().tolist()
                     val_predictions += output
 

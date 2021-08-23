@@ -6,11 +6,13 @@ from torch.utils.data import Dataset
 import path_utils
 
 
-class Optiver2DRegularDataset(Dataset):
+class Optiver2DGlobalDataset(Dataset):
 
-    def __init__(self, df, normalization='global', flip_probability=0.):
+    def __init__(self, df, channels, stock_id=False, normalization=None, flip_probability=0.):
 
         self.df = df
+        self.channels = channels
+        self.stock_id = stock_id
         self.normalization = normalization
 
         if self.normalization == 'global':
@@ -25,17 +27,6 @@ class Optiver2DRegularDataset(Dataset):
                 5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827,
                 0.003689893218043926, 0.00370745215558702, 6.618708642293018e-07, 1.2508970015188411e-06
             ])
-            # Normalizing only size sequences with global means and stds across stocks
-            book_means_only_size = np.array([
-                0, 0, 0, 0,
-                769.990177708821, 766.7345672818379, 959.3416027831918, 928.2202512713748,
-                0, 0, 0, 0
-            ])
-            book_stds_only_size = np.array([
-                1, 1, 1, 1,
-                5354.051690318169, 4954.947103063445, 6683.816183660414, 5735.299917793827,
-                1, 1, 1, 1
-            ])
             # Not normalizing trade price and trade price log returns because of the sparsity
             trade_means = np.array([0, 352.9736760331942, 4.1732040971227145, 0])
             trade_stds = np.array([1, 1041.9441951057488, 7.79955795393431, 1])
@@ -43,8 +34,8 @@ class Optiver2DRegularDataset(Dataset):
             self.transforms = {
                 'flip': flip_probability,
                 'normalize': {
-                    'book_means': book_means_only_size,
-                    'book_stds': book_stds_only_size,
+                    'book_means': book_means,
+                    'book_stds': book_stds,
                     'trade_means': trade_means,
                     'trade_stds': trade_stds
                 }
@@ -72,6 +63,13 @@ class Optiver2DRegularDataset(Dataset):
                 }
             }
 
+        else:
+            # No normalization
+            self.transforms = {
+                'flip': flip_probability,
+                'normalize': {}
+            }
+
     def __len__(self):
         return len(self.df)
 
@@ -87,7 +85,7 @@ class Optiver2DRegularDataset(Dataset):
         Returns
         -------
         stock_id_encoded [torch.LongTensor of shape (1)]: Encoded stock_id for stock embeddings
-        sequences [torch.FloatTensor of shape (600, 16)]: Concatenated sequences from book and trade data
+        sequences [torch.FloatTensor of shape (600, n_channels)]: Concatenated sequences from book and trade data
         target [torch.Tensor of shape (1)]: Target
         """
 
@@ -125,9 +123,10 @@ class Optiver2DRegularDataset(Dataset):
             book_wap2.reshape(-1, 1),
             book_wap1_log_returns.reshape(-1, 1),
             book_wap2_log_returns.reshape(-1, 1),
-
         ])
-        book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
+
+        if self.normalization is not None:
+            book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
 
         # Sequences from trade data
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_train/stock_{stock_id}/time_{time_id}.npy')
@@ -137,48 +136,60 @@ class Optiver2DRegularDataset(Dataset):
 
         # Concatenate book and trade sequences
         sequences = np.hstack([book_sequences, trade_sequences])
-        sequences = torch.as_tensor(sequences, dtype=torch.float)
+        sequences = torch.as_tensor(sequences[:, self.channels], dtype=torch.float)
 
         # Flip sequences on zeroth dimension
         if np.random.rand() < self.transforms['flip']:
             sequences = torch.flip(sequences, dims=[0])
 
+        stock_id_encoded = torch.as_tensor(sample['stock_id_encoded'], dtype=torch.long)
         target = sample['target']
         target = torch.as_tensor(target, dtype=torch.float)
-        return sequences, target
+
+        return stock_id_encoded, sequences, target
 
 
-class Optiver2DNestedDataset(Dataset):
+class Optiver2DLocalDataset(Dataset):
 
-    def __init__(self, df, stock_id, flip_probability=0.):
+    def __init__(self, df, channels, stock_id, normalization=None, flip_probability=0.):
 
         self.df = df.loc[df['stock_id'] == stock_id, :].reset_index(drop=True)
+        self.channels = channels
+        self.normalization = normalization
 
-        # Normalizing sequences with stock means and stds
-        self.df_book_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_means.csv')
-        self.df_book_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_stds.csv')
-        self.df_trade_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_means.csv')
-        self.df_trade_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_stds.csv')
-        # Not normalizing trade price and trade price log returns because of the sparsity
-        self.df_trade_stock_means['price'] = 0
-        self.df_trade_stock_means['price_squared_log_returns'] = 0
-        self.df_trade_stock_stds['price'] = 1
-        self.df_trade_stock_stds['price_squared_log_returns'] = 1
-        # Retrieve precomputed means and stds of the current stock
-        book_means = self.df_book_stock_means.loc[self.df_book_stock_means['stock_id'] == stock_id].iloc[0, 1:].values
-        book_stds = self.df_book_stock_stds.loc[self.df_book_stock_stds['stock_id'] == stock_id].iloc[0, 1:].values
-        trade_means = self.df_trade_stock_means.loc[self.df_trade_stock_means['stock_id'] == stock_id].iloc[0, 1:].values
-        trade_stds = self.df_trade_stock_stds.loc[self.df_trade_stock_stds['stock_id'] == stock_id].iloc[0, 1:].values
+        if self.normalization is not None:
+            # Normalizing sequences with stock means and stds
+            self.df_book_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_means.csv')
+            self.df_book_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/book_stock_stds.csv')
+            self.df_trade_stock_means = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_means.csv')
+            self.df_trade_stock_stds = pd.read_csv(f'{path_utils.DATA_PATH}/trade_stock_stds.csv')
+            # Not normalizing trade price and trade price log returns because of the sparsity
+            self.df_trade_stock_means['price'] = 0
+            self.df_trade_stock_means['price_squared_log_returns'] = 0
+            self.df_trade_stock_stds['price'] = 1
+            self.df_trade_stock_stds['price_squared_log_returns'] = 1
+            # Retrieve precomputed means and stds of the current stock
+            book_means = self.df_book_stock_means.loc[self.df_book_stock_means['stock_id'] == stock_id].iloc[0, 1:].values
+            book_stds = self.df_book_stock_stds.loc[self.df_book_stock_stds['stock_id'] == stock_id].iloc[0, 1:].values
+            trade_means = self.df_trade_stock_means.loc[self.df_trade_stock_means['stock_id'] == stock_id].iloc[0, 1:].values
+            trade_stds = self.df_trade_stock_stds.loc[self.df_trade_stock_stds['stock_id'] == stock_id].iloc[0, 1:].values
 
-        self.transforms = {
-            'flip': flip_probability,
-            'normalize': {
-                'book_means': book_means,
-                'book_stds': book_stds,
-                'trade_means': trade_means,
-                'trade_stds': trade_stds
+            self.transforms = {
+                'flip': flip_probability,
+                'normalize': {
+                    'book_means': book_means,
+                    'book_stds': book_stds,
+                    'trade_means': trade_means,
+                    'trade_stds': trade_stds
+                }
             }
-        }
+
+        else:
+            # No normalization
+            self.transforms = {
+                'flip': flip_probability,
+                'normalize': {}
+            }
 
     def __len__(self):
         return len(self.df)
@@ -194,7 +205,7 @@ class Optiver2DNestedDataset(Dataset):
 
         Returns
         -------
-        sequences [torch.FloatTensor of shape (600, 16)]: Concatenated sequences from book and trade data
+        sequences [torch.FloatTensor of shape (600, n_channels)]: Concatenated sequences from book and trade data
         target [torch.Tensor of shape (1)]: Target
         """
 
@@ -218,7 +229,6 @@ class Optiver2DNestedDataset(Dataset):
             book_wap2.reshape(-1, 1),
             book_wap1_log_returns.reshape(-1, 1),
             book_wap2_log_returns.reshape(-1, 1),
-
         ])
         book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
 
@@ -230,7 +240,7 @@ class Optiver2DNestedDataset(Dataset):
 
         # Concatenate book and trade sequences
         sequences = np.hstack([book_sequences, trade_sequences])
-        sequences = torch.as_tensor(sequences, dtype=torch.float)
+        sequences = torch.as_tensor(sequences[:, self.channels], dtype=torch.float)
 
         # Flip sequences on zeroth dimension
         if np.random.rand() < self.transforms['flip']:
@@ -238,4 +248,5 @@ class Optiver2DNestedDataset(Dataset):
 
         target = sample['target']
         target = torch.as_tensor(target, dtype=torch.float)
+
         return sequences, target

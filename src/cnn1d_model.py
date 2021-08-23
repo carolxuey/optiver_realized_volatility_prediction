@@ -46,6 +46,7 @@ class CNN1DModel(nn.Module):
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=self.stock_embedding_dims)
         self.dropout = nn.Dropout(0.25)
         self.linear = nn.Linear(600 + self.stock_embedding_dims, 256, bias=True)
+        self.relu = nn.ReLU()
 
         # Convolutional layers
         self.conv_block1 = Conv1dBlock(in_channels=in_channels, out_channels=8, skip_connection=True)

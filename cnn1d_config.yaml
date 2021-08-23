@@ -9,6 +9,7 @@ preprocessing:
   channels: [8, 9, 10, 11]
   normalization: global
   flip_probability: 0.
+  use_stock_id: True
 
 model:
   in_channels: 4

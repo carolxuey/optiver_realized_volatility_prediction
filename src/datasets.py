@@ -43,8 +43,8 @@ class Optiver2DRegularDataset(Dataset):
             self.transforms = {
                 'flip': flip_probability,
                 'normalize': {
-                    'book_means': book_means_only_size,
-                    'book_stds': book_stds_only_size,
+                    'book_means': book_means,
+                    'book_stds': book_stds,
                     'trade_means': trade_means,
                     'trade_stds': trade_stds
                 }

@@ -6,12 +6,12 @@ import path_utils
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
 from regular_trainer import RegularTrainer
-from nested_trainer import NestedTrainer
+#from nested_trainer import NestedTrainer
 
 
 if __name__ == '__main__':
 
-    config = yaml.load(open('../rnn_config.yaml', 'r'), Loader=yaml.FullLoader)
+    config = yaml.load(open('../cnn1d_config.yaml', 'r'), Loader=yaml.FullLoader)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('mode', type=str)

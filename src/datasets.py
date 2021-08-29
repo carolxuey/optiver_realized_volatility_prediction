@@ -113,9 +113,9 @@ class Optiver2DDataset(Dataset):
         book_wap2 = (book_sequences[:, 2] * book_sequences[:, 7] + book_sequences[:, 3] * book_sequences[:, 6]) /\
                     (book_sequences[:, 6] + book_sequences[:, 7])
         book_wap1_log = np.log(book_wap1)
-        book_wap1_log_returns = np.diff(book_wap1_log, prepend=[book_wap1_log[0]])
+        book_wap1_log_returns = np.abs(np.diff(book_wap1_log, prepend=[book_wap1_log[0]]))
         book_wap2_log = np.log(book_wap2)
-        book_wap2_log_returns = np.diff(book_wap2_log, prepend=[book_wap2_log[0]])
+        book_wap2_log_returns = np.abs(np.diff(book_wap2_log, prepend=[book_wap2_log[0]]))
         book_sequences = np.hstack([
             book_sequences,
             book_wap1.reshape(-1, 1),

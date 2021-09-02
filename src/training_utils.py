@@ -63,18 +63,3 @@ def rmspe_loss_pt(y_true, y_pred):
 
     rmspe = torch.sqrt(torch.mean(torch.square((y_true - y_pred) / y_true)))
     return rmspe
-
-
-def rmspe_eval_lgb(y_pred, train_dataset):
-
-    y_true = train_dataset.get_label()
-    rmspe = np.sqrt(np.mean(np.square((y_true - y_pred) / y_true)))
-    return 'rmspe', rmspe, False
-
-
-def rmspe_loss_lgb(y_pred, train_dataset):
-
-    y_true = train_dataset.get_label()
-    grad = 2.0 / y_true * (y_pred * 1.0 / y_true - 1)
-    hess = 2.0 / (y_true ** 2)
-    return grad, hess

@@ -132,6 +132,7 @@ class Optiver2DDataset(Dataset):
         trade_price_log1p = np.log1p(trade_sequences[:, 0])
         trade_price_log_returns = np.diff(trade_price_log1p, prepend=trade_price_log1p[0])
         trade_sequences = np.hstack([trade_sequences, trade_price_log_returns.reshape(-1, 1)])
+        trade_sequences = (trade_sequences - self.transforms['normalize']['trade_means'] / self.transforms['normalize']['trade_stds'])
 
         # Concatenate book and trade sequences
         sequences = np.hstack([book_sequences, trade_sequences])

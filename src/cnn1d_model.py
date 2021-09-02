@@ -94,52 +94,52 @@ class CNN1DModel(nn.Module):
         # Convolutional layers
         self.conv_layers1 = Conv1dLayers(
             in_channels=in_channels,
-            out_channels=16,
-            kernel_size=5,
+            out_channels=32,
+            kernel_size=3,
             depth_scale=depth_scale,
             width_scale=width_scale,
-            skip_connection=True,
+            skip_connection=False,
             initial=True
         )
         self.conv_layers2 = Conv1dLayers(
-            in_channels=16,
-            out_channels=32,
+            in_channels=32,
+            out_channels=64,
             kernel_size=5,
             depth_scale=depth_scale,
             width_scale=width_scale,
-            skip_connection=True,
+            skip_connection=False,
             initial=False
         )
         self.conv_layers3 = Conv1dLayers(
-            in_channels=32,
-            out_channels=64,
+            in_channels=64,
+            out_channels=128,
             kernel_size=7,
             depth_scale=depth_scale,
             width_scale=width_scale,
-            skip_connection=True,
+            skip_connection=False,
             initial=False
         )
         self.conv_layers4 = Conv1dLayers(
-            in_channels=64,
-            out_channels=128,
+            in_channels=128,
+            out_channels=256,
             kernel_size=9,
             depth_scale=depth_scale,
             width_scale=width_scale,
-            skip_connection=True,
+            skip_connection=False,
             initial=False
         )
         self.conv_layers5 = Conv1dLayers(
-            in_channels=128,
+            in_channels=256,
             out_channels=self.out_channels,
             kernel_size=11,
             depth_scale=depth_scale,
             width_scale=width_scale,
-            skip_connection=True,
+            skip_connection=False,
             initial=False
         )
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
-            nn.Linear(400 + self.stock_embedding_dims, 1, bias=True),
+            nn.Linear(800 + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 

@@ -5,16 +5,18 @@ import pandas as pd
 import path_utils
 import preprocessing_utils
 from preprocessing import PreprocessingPipeline
-from trainer import Trainer
+from nn_trainer import NeuralNetworkTrainer
+from lgb_trainer import LightGBMTrainer
 
 
 if __name__ == '__main__':
 
-    config = yaml.load(open('../cnn1d_config.yaml', 'r'), Loader=yaml.FullLoader)
-
     parser = argparse.ArgumentParser()
+    parser.add_argument('model', type=str)
     parser.add_argument('mode', type=str)
     args = parser.parse_args()
+
+    config = yaml.load(open(f'../{args.model}_config.yaml', 'r'), Loader=yaml.FullLoader)
 
     df_train = pd.read_csv(
         f'{path_utils.DATA_PATH}/train.csv',
@@ -30,6 +32,7 @@ if __name__ == '__main__':
     preprocessing_pipeline = PreprocessingPipeline(
         df_train,
         df_test,
+        config['preprocessing']['create_features'],
         config['preprocessing']['split_type'],
         config['preprocessing']['n_splits'],
         config['preprocessing']['shuffle'],
@@ -42,13 +45,27 @@ if __name__ == '__main__':
     print(f'Processed Test Set Shape: {df_test.shape}')
     print(f'Processed Test Set Memory Usage: {df_test.memory_usage().sum() / 1024 ** 2:.2f} MB')
 
-    trainer = Trainer(
-        model_name=config['model_name'],
-        model_path=config['model_path'],
-        preprocessing_parameters=config['preprocessing'],
-        model_parameters=config['model'],
-        training_parameters=config['training']
-    )
+    trainer = None
+
+    if args.model == 'cnn1d':
+
+        trainer = NeuralNetworkTrainer(
+            model_name=config['model_name'],
+            model_path=config['model_path'],
+            preprocessing_parameters=config['preprocessing'],
+            model_parameters=config['model'],
+            training_parameters=config['training']
+        )
+
+    elif args.model == 'lgb':
+
+        trainer = LightGBMTrainer(
+            model_name=config['model_name'],
+            model_path=config['model_path'],
+            predictors=config['predictors'],
+            model_parameters=config['model'],
+            fit_parameters=config['fit']
+        )
 
     if args.mode == 'train':
         trainer.train_and_validate(df_train)

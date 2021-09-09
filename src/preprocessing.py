@@ -1,3 +1,5 @@
+from tqdm import tqdm
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
@@ -6,10 +8,11 @@ import path_utils
 
 class PreprocessingPipeline:
 
-    def __init__(self, df_train, df_test, split_type, n_splits, shuffle, random_state):
+    def __init__(self, df_train, df_test, create_features, split_type, n_splits, shuffle, random_state):
 
         self.df_train = df_train.copy(deep=True)
         self.df_test = df_test.copy(deep=True)
+        self.create_features = create_features
         self.split_type = split_type
         self.n_splits = n_splits
         self.shuffle = shuffle
@@ -26,9 +29,137 @@ class PreprocessingPipeline:
         df_folds = pd.read_csv(f'{path_utils.DATA_PATH}/folds.csv')
         self.df_train['fold'] = df_folds[f'fold_{self.split_type}']
 
+    def _get_book_features(self):
+
+        for dataset, df in zip(['train', 'test'], [self.df_train, self.df_test]):
+
+            for stock_id in tqdm(df['stock_id'].unique()):
+
+                df_book = pd.read_parquet(f'{path_utils.DATA_PATH}/book_{dataset}.parquet/stock_id={stock_id}')
+
+                # Bid/Ask price competitiveness
+                df_book['bid_price_competitiveness'] = np.abs(df_book['bid_price1'] - df_book['bid_price2'])
+                df_book['ask_price_competitiveness'] = np.abs(df_book['ask_price1'] - df_book['ask_price2'])
+
+                # Bid/Ask price distance
+                df_book['bid_ask_price1_distance'] = np.abs(df_book['bid_price1'] - df_book['ask_price1'])
+                df_book['bid_ask_price2_distance'] = np.abs(df_book['bid_price2'] - df_book['ask_price2'])
+
+                # Weighted average prices
+                df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) / \
+                                  (df_book['bid_size1'] + df_book['ask_size1'])
+                df_book['wap2'] = (df_book['bid_price2'] * df_book['ask_size2'] + df_book['ask_price2'] * df_book['bid_size2']) / \
+                                  (df_book['bid_size2'] + df_book['ask_size2'])
+                df_book['wap3'] = ((df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) +
+                                   (df_book['bid_price2'] * df_book['ask_size2'] + df_book['ask_price2'] * df_book['bid_size2'])) / \
+                                  (df_book['bid_size1'] + df_book['ask_size1'] + df_book['bid_size2'] + df_book['ask_size2'])
+
+                # Squared log returns of sequences
+                log_returns_sequences = [
+                    'bid_price1', 'bid_price2', 'ask_price1', 'ask_price2',
+                    'bid_size1', 'bid_size2', 'ask_size1', 'ask_size2',
+                    'wap1', 'wap2', 'wap3'
+                ]
+
+                for sequence in log_returns_sequences:
+                    df_book[f'{sequence}_squared_log_returns'] = np.log(df_book[sequence] / df_book.groupby('time_id')[sequence].shift(1)) ** 2
+
+                for window in [4, 9, 16]:
+                    for wap in [1]:
+                        df_book[f'wap{wap}_{window}_second_interval_realized_volatility'] = np.sqrt(np.abs(df_book.groupby('time_id')[f'wap{wap}_squared_log_returns'].fillna(0).rolling(window=window, min_periods=window).sum().reset_index(drop=True)))
+
+                feature_aggregations = {
+                    'seconds_in_bucket': ['count'],
+                    'bid_price1': [],
+                    'bid_price2': [],
+                    'ask_price1': [],
+                    'ask_price2': [],
+                    'bid_size1': ['std'],
+                    'bid_size2': ['std'],
+                    'ask_size1': ['std'],
+                    'ask_size2': ['std'],
+                    'bid_price_competitiveness': ['mean', 'max', 'distance'],
+                    'ask_price_competitiveness': ['mean', 'max', 'distance'],
+                    'bid_ask_price1_distance': ['mean', 'std', 'max'],
+                    'bid_ask_price2_distance': ['mean', 'std', 'max'],
+                    'bid_price1_squared_log_returns': ['mean', 'std', 'sum'],
+                    'bid_price2_squared_log_returns': ['mean', 'std', 'sum'],
+                    'ask_price1_squared_log_returns': ['mean', 'std', 'sum'],
+                    'ask_price2_squared_log_returns': ['mean', 'std', 'sum'],
+                    'bid_size1_squared_log_returns': ['mean', 'std', 'sum'],
+                    'bid_size2_squared_log_returns': ['mean', 'std', 'sum'],
+                    'ask_size1_squared_log_returns': ['mean', 'std', 'sum'],
+                    'ask_size2_squared_log_returns': ['mean', 'std', 'sum'],
+                    'wap1': ['std', 'sum'],
+                    'wap2': ['std', 'sum'],
+                    'wap3': ['std', 'sum'],
+                    'wap1_squared_log_returns': ['mean', 'std', 'realized_volatility'],
+                    'wap2_squared_log_returns': ['mean', 'std', 'realized_volatility'],
+                    'wap3_squared_log_returns': ['mean', 'std', 'realized_volatility'],
+                    'wap1_4_second_interval_realized_volatility': ['mean', 'std'],
+                    'wap1_9_second_interval_realized_volatility': ['mean', 'std'],
+                    'wap1_16_second_interval_realized_volatility': ['mean', 'std'],
+                }
+
+                for feature, aggregations in feature_aggregations.items():
+                    if len(aggregations) > 0:
+                        for aggregation in aggregations:
+                            if aggregation == 'realized_volatility':
+                                feature_aggregation = np.sqrt(df_book.groupby('time_id')[feature].sum())
+                            elif aggregation == 'distance':
+                                feature_aggregation = df_book.groupby('time_id')[feature].max() - df_book.groupby('time_id')[feature].min()
+                            elif aggregation == 'autocorrelation':
+                                feature_aggregation = df_book.groupby('time_id')[feature].apply(pd.Series.autocorr)
+                            else:
+                                feature_aggregation = df_book.groupby('time_id')[feature].agg(aggregation)
+
+                            df.loc[df['stock_id'] == stock_id, f'book_{feature}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+
+    def _get_trade_features(self):
+
+        for dataset, df in zip(['train', 'test'], [self.df_train, self.df_test]):
+
+            for stock_id in tqdm(df['stock_id'].unique()):
+
+                df_trade = pd.read_parquet(f'{path_utils.DATA_PATH}/trade_{dataset}.parquet/stock_id={stock_id}')
+
+                df_trade['order_average_size'] = df_trade['size'] / df_trade['order_count']
+
+                # Squared log returns of sequences
+                log_returns_sequences = ['price']
+
+                for sequence in log_returns_sequences:
+                    df_trade[f'{sequence}_squared_log_returns'] = np.log(df_trade[sequence] / df_trade.groupby('time_id')[sequence].shift(1)) ** 2
+
+                feature_aggregations = {
+                    'seconds_in_bucket': ['count'],
+                    'price': ['std'],
+                    'size': ['std'],
+                    'order_average_size': ['mean', 'std'],
+                    'price_squared_log_returns': ['mean', 'std', 'realized_volatility']
+                }
+
+                for feature, aggregations in feature_aggregations.items():
+                    if len(aggregations) > 0:
+                        for aggregation in aggregations:
+                            if aggregation == 'realized_volatility':
+                                feature_aggregation = np.sqrt(df_trade.groupby('time_id')[feature].sum())
+                            else:
+                                feature_aggregation = df_trade.groupby('time_id')[feature].agg(aggregation)
+
+                            df.loc[df['stock_id'] == stock_id, f'trade_{feature}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+
+            # Fill missing trade data with zeros
+            self.df_train = self.df_train.fillna(0)
+            self.df_test = self.df_test.fillna(0)
+
     def transform(self):
 
         self._get_folds()
         self._label_encode()
+
+        if self.create_features:
+            self._get_book_features()
+            self._get_trade_features()
 
         return self.df_train, self.df_test

@@ -233,3 +233,4 @@ class Trainer:
 
         oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
         print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')
+        df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)

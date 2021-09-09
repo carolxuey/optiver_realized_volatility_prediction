@@ -173,9 +173,15 @@ class Optiver2DDataset(Dataset):
         # Sequences from trade data
         trade_sequences = np.load(f'{path_utils.DATA_PATH}/trade_train/stock_{stock_id}/time_{time_id}.npy')
 
+        #print(trade_sequences.shape)
+        #print(trade_sequences)
+        #print(trade_sequences[trade_sequences != 0])
+        #print(trade_sequences[trade_sequences[:, 0] != 0, :].shape)
+        #exit()
+
         if self.normalization is not None:
             book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
-            trade_sequences[trade_sequences != 0] = (trade_sequences[trade_sequences != 0] - self.transforms['normalize']['trade_means'] / self.transforms['normalize']['trade_stds'])
+            trade_sequences[trade_sequences[:, 0] != 0, :] = (trade_sequences[trade_sequences[:, 0] != 0, :] - self.transforms['normalize']['trade_means'] / self.transforms['normalize']['trade_stds'])
 
         # Concatenate book and trade sequences
         sequences = np.hstack([book_sequences, trade_sequences])

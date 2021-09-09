@@ -150,7 +150,7 @@ class CNN1DModel(nn.Module):
         )
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
-            nn.Linear(144 + self.stock_embedding_dims, 1, bias=True),
+            nn.Linear(400 + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 

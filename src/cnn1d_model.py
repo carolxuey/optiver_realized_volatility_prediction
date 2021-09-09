@@ -161,7 +161,6 @@ class CNN1DModel(nn.Module):
         x = self.conv_layers2(x)
         x = self.conv_layers3(x)
         x = self.conv_layers4(x)
-        x = self.conv_layers5(x)
         x = self.pooling(x)
         x = x.view(-1, x.shape[1])
 

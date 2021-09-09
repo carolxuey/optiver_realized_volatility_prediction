@@ -88,8 +88,8 @@ def get_all_trade_statistics(df):
         df_trades = pd.concat([df_trades, df_trade.loc[:, trade_features]], axis=0, ignore_index=True)
 
     df_trades.fillna(0, inplace=True)
-    means = df_trades.mean(axis=0).to_dict()
-    stds = df_trades.std(axis=0).to_dict()
+    means = df_trades[df_trades != 0].mean(axis=0).to_dict()
+    stds = df_trades[df_trades != 0].std(axis=0).to_dict()
     return means, stds
 
 
@@ -178,9 +178,9 @@ def get_stock_trade_statistics(df):
 
         df_trade = preprocessing_utils.read_trade_data(df, 'train', stock_id, sort=True, zero_fill=True)
 
-        stock_means = df_trade.loc[:, trade_features].mean().to_dict()
+        stock_means = df_trade.loc[df_trade != 0, trade_features].mean().to_dict()
         stock_means['stock_id'] = stock_id
-        stock_stds = df_trade.loc[:, trade_features].std().to_dict()
+        stock_stds = df_trade.loc[df_trade != 0, trade_features].std().to_dict()
         stock_stds['stock_id'] = stock_id
         df_stock_means = df_stock_means.append(stock_means, ignore_index=True)
         df_stock_stds = df_stock_stds.append(stock_stds, ignore_index=True)

@@ -6,13 +6,13 @@ preprocessing:
   n_splits: 5
   shuffle: True
   random_state: 42
-  channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+  channels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
   normalization: global
   flip_probability: 0.
   use_stock_id: True
 
 model:
-  in_channels: 16
+  in_channels: 25
   out_channels: 512
   use_stock_id: True
   stock_embedding_dims: 16

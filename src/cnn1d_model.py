@@ -12,12 +12,26 @@ class Conv1dBlock(nn.Module):
 
         self.skip_connection = skip_connection
         self.conv_block = nn.Sequential(
-            nn.Conv1d(in_channels, out_channels, kernel_size=(kernel_size,), stride=(stride,), padding=(kernel_size // 2,), padding_mode='replicate', bias=True),
+            nn.Conv1d(
+                in_channels,
+                out_channels,
+                kernel_size=(kernel_size,),
+                stride=(stride,),
+                padding=(kernel_size // 2,),
+                padding_mode='replicate',
+                bias=True
+            ),
             nn.BatchNorm1d(out_channels),
             nn.ReLU(),
         )
         self.downsample = nn.Sequential(
-            nn.Conv1d(in_channels, out_channels, kernel_size=(1,), stride=(stride,), bias=False),
+            nn.Conv1d(
+                in_channels,
+                out_channels,
+                kernel_size=(1,),
+                stride=(stride,),
+                bias=False
+            ),
             nn.BatchNorm1d(out_channels)
         )
         self.relu = nn.ReLU()
@@ -35,7 +49,7 @@ class Conv1dBlock(nn.Module):
 
 class Conv1dLayers(nn.Module):
 
-    def __init__(self, in_channels, out_channels, kernel_size, depth_scale, width_scale, skip_connection, initial=False):
+    def __init__(self, in_channels, out_channels, kernel_size, depth_scale, width_scale, skip_connection=False, initial=False):
 
         super(Conv1dLayers, self).__init__()
 
@@ -43,30 +57,36 @@ class Conv1dLayers(nn.Module):
         width = int(math.ceil(out_channels * width_scale))
 
         if initial:
-            layers = [Conv1dBlock(
+            layers = [
+                Conv1dBlock(
                     in_channels=in_channels,
                     out_channels=width,
                     kernel_size=kernel_size,
                     stride=2,
                     skip_connection=skip_connection
-            )]
+                )
+            ]
         else:
-            layers = [Conv1dBlock(
-                in_channels=(int(math.ceil(in_channels * width_scale))),
-                out_channels=width,
-                kernel_size=kernel_size,
-                stride=2,
-                skip_connection=skip_connection
-            )]
+            layers = [
+                Conv1dBlock(
+                    in_channels=(int(math.ceil(in_channels * width_scale))),
+                    out_channels=width,
+                    kernel_size=kernel_size,
+                    stride=2,
+                    skip_connection=skip_connection
+                )
+            ]
 
         for _ in range(depth - 1):
-            layers += [Conv1dBlock(
-                in_channels=width,
-                out_channels=width,
-                kernel_size=kernel_size,
-                stride=1,
-                skip_connection=skip_connection
-            )]
+            layers += [
+                Conv1dBlock(
+                    in_channels=width,
+                    out_channels=width,
+                    kernel_size=kernel_size,
+                    stride=1,
+                    skip_connection=skip_connection
+                )
+            ]
 
         self.conv_layers = nn.Sequential(*layers)
 
@@ -141,6 +161,7 @@ class CNN1DModel(nn.Module):
         x = self.conv_layers2(x)
         x = self.conv_layers3(x)
         x = self.conv_layers4(x)
+        x = self.conv_layers5(x)
         x = self.pooling(x)
         x = x.view(-1, x.shape[1])
 

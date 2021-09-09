@@ -175,6 +175,7 @@ class Optiver2DDataset(Dataset):
 
         if self.normalization is not None:
             book_sequences = (book_sequences - self.transforms['normalize']['book_means']) / self.transforms['normalize']['book_stds']
+            # Not normalizing zero values in trade data
             trade_sequences[trade_sequences[:, 0] != 0, :] = (trade_sequences[trade_sequences[:, 0] != 0, :] - self.transforms['normalize']['trade_means'] / self.transforms['normalize']['trade_stds'])
 
         # Concatenate book and trade sequences

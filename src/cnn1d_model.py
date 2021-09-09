@@ -95,7 +95,7 @@ class CNN1DModel(nn.Module):
         self.conv_layers1 = Conv1dLayers(
             in_channels=in_channels,
             out_channels=32,
-            kernel_size=3,
+            kernel_size=5,
             depth_scale=depth_scale,
             width_scale=width_scale,
             skip_connection=False,
@@ -104,7 +104,7 @@ class CNN1DModel(nn.Module):
         self.conv_layers2 = Conv1dLayers(
             in_channels=32,
             out_channels=64,
-            kernel_size=5,
+            kernel_size=7,
             depth_scale=depth_scale,
             width_scale=width_scale,
             skip_connection=False,
@@ -113,7 +113,7 @@ class CNN1DModel(nn.Module):
         self.conv_layers3 = Conv1dLayers(
             in_channels=64,
             out_channels=128,
-            kernel_size=7,
+            kernel_size=9,
             depth_scale=depth_scale,
             width_scale=width_scale,
             skip_connection=False,
@@ -121,15 +121,6 @@ class CNN1DModel(nn.Module):
         )
         self.conv_layers4 = Conv1dLayers(
             in_channels=128,
-            out_channels=256,
-            kernel_size=9,
-            depth_scale=depth_scale,
-            width_scale=width_scale,
-            skip_connection=False,
-            initial=False
-        )
-        self.conv_layers5 = Conv1dLayers(
-            in_channels=256,
             out_channels=self.out_channels,
             kernel_size=11,
             depth_scale=depth_scale,
@@ -139,7 +130,7 @@ class CNN1DModel(nn.Module):
         )
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
-            nn.Linear(800 + self.stock_embedding_dims, 1, bias=True),
+            nn.Linear(144 + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -150,14 +141,8 @@ class CNN1DModel(nn.Module):
         x = self.conv_layers2(x)
         x = self.conv_layers3(x)
         x = self.conv_layers4(x)
-        x = self.conv_layers5(x)
-        #print('after last conv', x.shape)
         x = self.pooling(x)
-        #print('after pooling', x.shape)
         x = x.view(-1, x.shape[1])
-
-        #print('after reshape', x.shape)
-        #exit()
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)

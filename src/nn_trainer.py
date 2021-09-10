@@ -8,7 +8,7 @@ import path_utils
 import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
-from visualize import visualize_learning_curve, visualize_predictions
+from visualize import visualize_learning_curve
 
 
 class NeuralNetworkTrainer:
@@ -233,8 +233,3 @@ class NeuralNetworkTrainer:
             print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
 
         df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
-        visualize_predictions(
-            y_true=df_train['target'],
-            y_pred=df_train[f'{self.model_name}_predictions'],
-            path=f'{self.model_path}/{self.model_name}_predictions.png'
-        )

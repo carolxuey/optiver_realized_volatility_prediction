@@ -4,7 +4,7 @@ import lightgbm as lgb
 
 import path_utils
 import training_utils
-from visualize import visualize_feature_importance, visualize_predictions
+from visualize import visualize_feature_importance
 
 
 class LightGBMTrainer:
@@ -81,8 +81,3 @@ class LightGBMTrainer:
             print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
 
         df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
-        visualize_predictions(
-            y_true=df_train['target'],
-            y_pred=df_train[f'{self.model_name}_predictions'],
-            path=f'{self.model_path}/{self.model_name}_predictions.png'
-        )

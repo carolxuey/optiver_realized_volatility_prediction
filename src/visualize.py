@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def draw_learning_curve(training_losses, validation_losses, title, path=None):
+def visualize_learning_curve(training_losses, validation_losses, title, path=None):
 
     """
     Visualize learning curves of the models
@@ -17,7 +17,6 @@ def draw_learning_curve(training_losses, validation_losses, title, path=None):
     """
 
     fig, ax = plt.subplots(figsize=(32, 8), dpi=100)
-
     sns.lineplot(
         x=np.arange(1, len(training_losses) + 1),
         y=training_losses,
@@ -30,13 +29,77 @@ def draw_learning_curve(training_losses, validation_losses, title, path=None):
         ax=ax,
         label='val_loss'
     )
-
     ax.set_xlabel('Epochs/Steps', size=15, labelpad=12.5)
     ax.set_ylabel('Loss', size=15, labelpad=12.5)
     ax.tick_params(axis='x', labelsize=12.5, pad=10)
     ax.tick_params(axis='y', labelsize=12.5, pad=10)
     ax.legend(prop={'size': 18})
     ax.set_title(title, size=20, pad=15)
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
+
+
+def visualize_feature_importance(feature_importance, title, path=None):
+
+    """
+    Visualize feature importance of the models
+
+    Parameters
+    ----------
+    feature_importance [pandas.DataFrame of shape (n_features)]: DataFrame of features as index and importances as values
+    title (str): Title of the plot
+    path (str or None): Path of the output file (if path is None, plot is displayed with selected backend)
+    """
+
+    feature_importance.sort_values(by='Importance', inplace=True, ascending=False)
+
+    fig, ax = plt.subplots(figsize=(24, len(feature_importance)))
+    sns.barplot(
+        x='Importance',
+        y=feature_importance.index,
+        data=feature_importance,
+        palette='Blues_d',
+        ax=ax
+    )
+    ax.set_xlabel('')
+    ax.tick_params(axis='x', labelsize=12.5, pad=10)
+    ax.tick_params(axis='y', labelsize=12.5, pad=10)
+    ax.set_title(title, size=20, pad=15)
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
+
+
+def visualize_predictions(y_true, y_pred, path=None):
+
+    """
+    Visualize predictions of the models
+
+    Parameters
+    ----------
+    y_true [array-like of shape (n_samples)]: Ground-truth
+    y_pred [array-like of shape (n_samples)]: Predictions
+    path (str or None): Path of the output file (if path is None, plot is displayed with selected backend)
+    """
+
+    fig, axes = plt.subplots(ncols=2, figsize=(32, 6))
+    sns.scatterplot(x=y_true, y=y_pred, ax=axes[0])
+    sns.histplot(y_true, label='Ground-truth Labels', kde=True, color='blue', ax=axes[1])
+    sns.histplot(y_pred, label='Predictions', kde=True, color='red', ax=axes[1])
+    axes[0].set_xlabel(f'Ground-truth Labels', size=15, labelpad=12.5)
+    axes[0].set_ylabel(f'Predictions', size=15, labelpad=12.5)
+    axes[1].set_xlabel('')
+    axes[1].legend(prop={'size': 17.5})
+    for i in range(2):
+        axes[i].tick_params(axis='x', labelsize=12.5, pad=10)
+        axes[i].tick_params(axis='y', labelsize=12.5, pad=10)
+    axes[0].set_title(f'Ground-truth Labels vs Predictions', size=20, pad=15)
+    axes[1].set_title(f'Predictions Distributions', size=20, pad=15)
 
     if path is None:
         plt.show()

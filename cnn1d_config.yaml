@@ -2,6 +2,7 @@ model_name: cnn1d
 model_path: ../models/cnn1d
 
 preprocessing:
+  create_features: False
   split_type: group
   n_splits: 5
   shuffle: True

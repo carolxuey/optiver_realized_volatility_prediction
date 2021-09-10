@@ -8,10 +8,10 @@ import path_utils
 import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
-from visualize import draw_learning_curve
+from visualize import visualize_learning_curve
 
 
-class Trainer:
+class NeuralNetworkTrainer:
 
     def __init__(self, model_name, model_path, preprocessing_parameters, model_parameters, training_parameters):
 
@@ -173,7 +173,7 @@ class Trainer:
                 if len(summary['val_loss']) - best_iteration >= self.training_parameters['early_stopping_patience']:
                     print(f'Early stopping (validation loss didn\'t increase for {self.training_parameters["early_stopping_patience"]} epochs/steps)')
                     print(f'Best validation loss is {np.min(summary["val_loss"]):.6f}')
-                    draw_learning_curve(
+                    visualize_learning_curve(
                         training_losses=summary['train_loss'],
                         validation_losses=summary['val_loss'],
                         title=f'{self.model_name} - Fold {fold} Learning Curve',
@@ -225,12 +225,17 @@ class Trainer:
 
             del _, val_idx, val_dataset, val_loader, val_predictions, model
 
-        print(f'{"-" * 30}')
+        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
+        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')
         for stock_id in df_train['stock_id'].unique():
             df_stock = df_train.loc[df_train['stock_id'] == stock_id, :]
             stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
             print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
 
+<<<<<<< HEAD:src/trainer.py
         oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
         print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')
         df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
+=======
+        df_train[f'{self.model_name}_predictions'].to_csv(f'{path_utils.MODELS_PATH}/{self.model_name}_predictions', index=False)
+>>>>>>> d3d9ba63a1a067a84ff0dbf7a8375bf9bc29be5d:src/nn_trainer.py

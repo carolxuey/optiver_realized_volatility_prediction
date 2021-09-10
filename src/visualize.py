@@ -75,7 +75,7 @@ def visualize_feature_importance(feature_importance, title, path=None):
         plt.savefig(path)
 
 
-def visualize_predictions(y_true, y_pred, path=None):
+def visualize_predictions(y_true, y_pred, title, path=None):
 
     """
     Visualize predictions of the models
@@ -84,6 +84,7 @@ def visualize_predictions(y_true, y_pred, path=None):
     ----------
     y_true [array-like of shape (n_samples)]: Ground-truth
     y_pred [array-like of shape (n_samples)]: Predictions
+    title (str): Title of the plot
     path (str or None): Path of the output file (if path is None, plot is displayed with selected backend)
     """
 
@@ -100,6 +101,8 @@ def visualize_predictions(y_true, y_pred, path=None):
         axes[i].tick_params(axis='y', labelsize=12.5, pad=10)
     axes[0].set_title(f'Ground-truth Labels vs Predictions', size=20, pad=15)
     axes[1].set_title(f'Predictions Distributions', size=20, pad=15)
+
+    fig.suptitle(title, size=20, pad=20)
 
     if path is None:
         plt.show()

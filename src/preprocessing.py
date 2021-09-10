@@ -159,7 +159,16 @@ class PreprocessingPipeline:
         self._label_encode()
 
         if self.create_features:
+
             self._get_book_features()
             self._get_trade_features()
+
+            self.df_train.to_csv(f'{path_utils.DATA_PATH}/train_features.csv', index=False)
+            self.df_test.to_csv(f'{path_utils.DATA_PATH}/test_features.csv', index=False)
+
+        else:
+
+            self.df_train = pd.read_csv(f'{path_utils.DATA_PATH}/train_features.csv')
+            self.df_test = pd.read_csv(f'{path_utils.DATA_PATH}/test_features.csv')
 
         return self.df_train, self.df_test

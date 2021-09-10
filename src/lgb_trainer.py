@@ -80,4 +80,4 @@ class LightGBMTrainer:
             stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
             print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
 
-        df_train[f'{self.model_name}_predictions'].to_csv(f'{path_utils.MODELS_PATH}/{self.model_name}_predictions', index=False)
+        df_train[f'{self.model_name}_predictions'].to_csv(f'{path_utils.MODELS_PATH}/{self.model_name}_predictions.csv', index=False)

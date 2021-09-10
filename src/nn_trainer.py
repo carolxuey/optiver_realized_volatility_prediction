@@ -232,10 +232,5 @@ class NeuralNetworkTrainer:
             stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
             print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
 
-<<<<<<< HEAD:src/trainer.py
-        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
-        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')
-        df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
-=======
-        df_train[f'{self.model_name}_predictions'].to_csv(f'{path_utils.MODELS_PATH}/{self.model_name}_predictions', index=False)
->>>>>>> d3d9ba63a1a067a84ff0dbf7a8375bf9bc29be5d:src/nn_trainer.py
+        df_train[f'{self.model_name}_predictions'].to_csv(f'{path_utils.MODELS_PATH}/{self.model_name}_predictions.csv', index=False)
+

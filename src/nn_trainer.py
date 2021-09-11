@@ -8,6 +8,7 @@ import path_utils
 import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
+from rnn_model import RNNModel
 from visualize import visualize_learning_curve
 
 
@@ -27,6 +28,8 @@ class NeuralNetworkTrainer:
 
         if self.model_name == 'cnn1d':
             model = CNN1DModel(**self.model_parameters)
+        elif self.model_name == 'rnn':
+            model = RNNModel(**self.model_parameters)
 
         return model
 

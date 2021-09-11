@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     trainer = None
 
-    if args.model == 'cnn1d':
+    if args.model == 'cnn1d' or args.model == 'rnn':
 
         trainer = NeuralNetworkTrainer(
             model_name=config['model_name'],

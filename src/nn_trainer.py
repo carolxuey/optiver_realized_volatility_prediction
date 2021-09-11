@@ -8,7 +8,8 @@ import path_utils
 import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
-from visualize import visualize_learning_curve, visualize_predictions
+from rnn_model import RNNModel
+from visualize import visualize_learning_curve
 
 
 class NeuralNetworkTrainer:
@@ -27,6 +28,8 @@ class NeuralNetworkTrainer:
 
         if self.model_name == 'cnn1d':
             model = CNN1DModel(**self.model_parameters)
+        elif self.model_name == 'rnn':
+            model = RNNModel(**self.model_parameters)
 
         return model
 
@@ -220,22 +223,7 @@ class NeuralNetworkTrainer:
                     val_predictions += output
 
             df_train.loc[val_idx, f'{self.model_name}_predictions'] = val_predictions
-            fold_score = training_utils.rmspe_metric(df_train.loc[val_idx, 'target'], val_predictions)
-            print(f'Fold {fold} - RMSPE: {fold_score:.6}')
-
             del _, val_idx, val_dataset, val_loader, val_predictions, model
 
-        oof_score = training_utils.rmspe_metric(df_train['target'], df_train[f'{self.model_name}_predictions'])
-        print(f'{"-" * 30}\nOOF RMSPE: {oof_score:.6}\n{"-" * 30}')
-        for stock_id in df_train['stock_id'].unique():
-            df_stock = df_train.loc[df_train['stock_id'] == stock_id, :]
-            stock_oof_score = training_utils.rmspe_metric(df_stock['target'], df_stock[f'{self.model_name}_predictions'])
-            print(f'Stock {stock_id} - RMSPE: {stock_oof_score:.6}')
-
         df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
-        visualize_predictions(
-            y_true=df_train['target'],
-            y_pred=df_train[f'{self.model_name}_predictions'],
-            path=f'{self.model_path}/{self.model_name}_predictions.png'
-        )
 

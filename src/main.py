@@ -7,6 +7,7 @@ import preprocessing_utils
 from preprocessing import PreprocessingPipeline
 from nn_trainer import NeuralNetworkTrainer
 from lgb_trainer import LightGBMTrainer
+import evaluation
 
 
 if __name__ == '__main__':
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 
     trainer = None
 
-    if args.model == 'cnn1d':
+    if args.model == 'cnn1d' or args.model == 'rnn':
 
         trainer = NeuralNetworkTrainer(
             model_name=config['model_name'],
@@ -71,3 +72,4 @@ if __name__ == '__main__':
         trainer.train_and_validate(df_train)
     elif args.mode == 'inference':
         trainer.inference(df_train)
+        evaluation.evaluate_predictions(df_train, predictions_column=f'{config["model_name"]}_predictions')

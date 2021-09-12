@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+import preprocessing_utils
+
 
 def visualize_learning_curve(training_losses, validation_losses, title, path=None):
 
@@ -40,6 +42,7 @@ def visualize_learning_curve(training_losses, validation_losses, title, path=Non
         plt.show()
     else:
         plt.savefig(path)
+        plt.close(fig)
 
 
 def visualize_feature_importance(feature_importance, title, path=None):
@@ -73,6 +76,7 @@ def visualize_feature_importance(feature_importance, title, path=None):
         plt.show()
     else:
         plt.savefig(path)
+        plt.close(fig)
 
 
 def visualize_predictions(y_true, y_pred, title, path=None):
@@ -105,6 +109,44 @@ def visualize_predictions(y_true, y_pred, title, path=None):
     axes[1].set_title(f'Predictions Distributions', size=20, pad=15)
 
     fig.suptitle(title, size=20, y=0.95)
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)
+        plt.close(fig)
+
+
+def visualize_time_bucket(df_train, stock_id, time_id, path):
+
+    """
+    Visualize time buckets as images
+
+    Parameters
+    ----------
+    df_train [pandas.DataFrame of shape (n_samples, 2)]: Training DataFrame with stock_id and time_id columns
+    stock_id (int): ID of the stock (0 <= stock_id <= 126)
+    time_id (int): ID of the stock (0 <= stock_id <= 32767)
+    path (str or None): Path of the output file (if path is None, plot is displayed with selected backend)
+    """
+
+    sequences, current_realized_volatility, target = preprocessing_utils.read_time_bucket(
+        df_train=df_train,
+        stock_id=stock_id,
+        time_id=time_id
+    )
+
+    fig, ax = plt.subplots(figsize=(24, 60), dpi=200)
+    ax.imshow(sequences)
+    ax.set_xlabel('Sequences', size=15, labelpad=12.5)
+    ax.set_ylabel('Timesteps', size=15, labelpad=12.5)
+    ax.set_xticks([])
+    ax.tick_params(axis='y', labelsize=12.5, pad=10)
+    ax.set_title(
+        f'Stock {stock_id} Time Bucket {time_id} - Current Realized Volatility: {current_realized_volatility:.6f} - Target: {target:.6f}',
+        size=20,
+        pad=15
+    )
 
     if path is None:
         plt.show()

@@ -4,7 +4,7 @@ import lightgbm as lgb
 
 import path_utils
 import training_utils
-from visualize import visualize_feature_importance
+from visualization import visualize_feature_importance
 
 
 class LightGBMTrainer:

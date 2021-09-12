@@ -9,7 +9,7 @@ import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
 from rnn_model import RNNModel
-from visualize import visualize_learning_curve
+from visualization import visualize_learning_curve
 
 
 class NeuralNetworkTrainer:

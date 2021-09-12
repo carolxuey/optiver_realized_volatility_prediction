@@ -1,8 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import torch
 
+import path_utils
 import preprocessing_utils
+from cnn1d_model import CNN1DModel
 
 
 def visualize_learning_curve(training_losses, validation_losses, title, path=None):
@@ -117,7 +120,7 @@ def visualize_predictions(y_true, y_pred, title, path=None):
         plt.close(fig)
 
 
-def visualize_time_bucket(df_train, stock_id, time_id, path):
+def visualize_time_bucket(df_train, stock_id, time_id, model_name, model_parameters, path):
 
     """
     Visualize time buckets as images
@@ -126,7 +129,9 @@ def visualize_time_bucket(df_train, stock_id, time_id, path):
     ----------
     df_train [pandas.DataFrame of shape (n_samples, 2)]: Training DataFrame with stock_id and time_id columns
     stock_id (int): ID of the stock (0 <= stock_id <= 126)
-    time_id (int): ID of the stock (0 <= stock_id <= 32767)
+    time_id (int): ID of the time bucket (0 <= stock_id <= 32767)
+    model_name (str): Name of the model
+    model_parameters (dict): Model configuration
     path (str or None): Path of the output file (if path is None, plot is displayed with selected backend)
     """
 
@@ -136,6 +141,28 @@ def visualize_time_bucket(df_train, stock_id, time_id, path):
         time_id=time_id
     )
 
+    sample = df_train.loc[(df_train['stock_id'] == stock_id) & (df_train['time_id'] == time_id), :]
+    fold = int(sample['fold'].values[0])
+    stock_id_encoded = int(sample['stock_id_encoded'].values[0])
+
+    if model_name == 'cnn1d':
+        model = CNN1DModel(**model_parameters)
+    else:
+        model = None
+
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.load_state_dict(torch.load(f'{path_utils.MODELS_PATH}/{model_name}/{model_name}_fold{fold}.pt'))
+    model.to(device)
+    model.eval()
+
+    sequences_tensor = torch.as_tensor(sequences.reshape(1, 600, 25), dtype=torch.float)
+    sequences_tensor = sequences_tensor.to(device)
+    stock_id_encoded_tensor = torch.as_tensor([stock_id_encoded], dtype=torch.long)
+    stock_id_encoded_tensor = stock_id_encoded_tensor.to(device)
+
+    with torch.no_grad():
+        prediction = model(stock_id_encoded_tensor, sequences_tensor).detach().cpu().numpy()[0]
+
     fig, ax = plt.subplots(figsize=(24, 60), dpi=200)
     ax.imshow(sequences)
     ax.set_xlabel('Sequences', size=15, labelpad=12.5)
@@ -143,7 +170,7 @@ def visualize_time_bucket(df_train, stock_id, time_id, path):
     ax.set_xticks([])
     ax.tick_params(axis='y', labelsize=12.5, pad=10)
     ax.set_title(
-        f'Stock {stock_id} Time Bucket {time_id} - Current Realized Volatility: {current_realized_volatility:.6f} - Target: {target:.6f}',
+        f'Stock {stock_id} Time Bucket {time_id} - Current Realized Volatility: {current_realized_volatility:.6f} - Target: {target:.6f} - Prediction {prediction:.6f}',
         size=20,
         pad=15
     )

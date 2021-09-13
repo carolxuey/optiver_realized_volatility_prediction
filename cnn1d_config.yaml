@@ -11,6 +11,9 @@ preprocessing:
   normalization: global
   flip_probability: 0.
   use_stock_id: True
+  outlier_time_buckets:
+    - 25504
+    - 27174
 
 model:
   in_channels: 25

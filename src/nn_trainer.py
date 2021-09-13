@@ -97,8 +97,11 @@ class NeuralNetworkTrainer:
             print(f'\nFold {fold}\n{"-" * 6}')
 
             trn_idx, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
+            df_training_samples = df_train.loc[trn_idx, :].reset_index(drop=True)
+            df_training_samples = df_training_samples.loc[~df_training_samples['time_id'].isin(self.preprocessing_parameters['outlier_time_buckets']), :].reset_index(drop=True)
+
             train_dataset = Optiver2DDataset(
-                df=df_train.loc[trn_idx, :],
+                df=df_training_samples,
                 channels=self.preprocessing_parameters['channels'],
                 normalization=self.preprocessing_parameters['normalization'],
                 flip_probability=self.preprocessing_parameters['flip_probability']
@@ -226,4 +229,3 @@ class NeuralNetworkTrainer:
             del _, val_idx, val_dataset, val_loader, val_predictions, model
 
         df_train[f'{self.model_name}_predictions'].to_csv(f'{self.model_path}/{self.model_name}_predictions.csv', index=False)
-

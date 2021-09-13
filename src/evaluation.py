@@ -1,6 +1,6 @@
 import path_utils
 import training_utils
-from visualize import visualize_predictions
+from visualization import visualize_predictions
 
 
 def evaluate_predictions(df_train, predictions_column):

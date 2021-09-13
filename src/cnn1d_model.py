@@ -150,7 +150,7 @@ class CNN1DModel(nn.Module):
         )
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
-            nn.Linear(400 + self.stock_embedding_dims, 1, bias=True),
+            nn.Linear(256 + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -163,6 +163,8 @@ class CNN1DModel(nn.Module):
         x = self.conv_layers4(x)
         x = self.pooling(x)
         x = x.view(-1, x.shape[1])
+        #print(x.shape)
+        #exit()
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)

@@ -17,8 +17,8 @@ model:
   out_channels: 256
   use_stock_id: True
   stock_embedding_dims: 16
-  alpha: 1.5
-  beta: 1.25
+  alpha: 1.
+  beta: 1.
   phi: 1
 
 training:

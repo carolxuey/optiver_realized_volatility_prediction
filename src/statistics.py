@@ -22,9 +22,9 @@ def get_all_book_statistics(df):
     """
 
     book_features = [
-        'bid_price1', 'ask_price1', 'bid_price2', 'ask_price2',
-        'bid_size1', 'ask_size1', 'bid_size2', 'ask_size2',
-        'bid_price1_absolute_log_returns', 'ask_price1_absolute_log_returns', 'bid_price2_absolute_log_returns', 'ask_price2_absolute_log_returns',
+        #'bid_price1', 'ask_price1', 'bid_price2', 'ask_price2',
+        #'bid_size1', 'ask_size1', 'bid_size2', 'ask_size2',
+        #'bid_price1_absolute_log_returns', 'ask_price1_absolute_log_returns', 'bid_price2_absolute_log_returns', 'ask_price2_absolute_log_returns',
         'bid_size1_absolute_log_returns', 'ask_size1_absolute_log_returns', 'bid_size2_absolute_log_returns', 'ask_size2_absolute_log_returns',
         'wap1', 'wap2', 'wap3',
         'wap1_absolute_log_returns', 'wap2_absolute_log_returns', 'wap3_absolute_log_returns'

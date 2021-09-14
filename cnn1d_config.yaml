@@ -11,9 +11,6 @@ preprocessing:
   normalization: global
   flip_probability: 0.
   use_stock_id: True
-  outlier_time_buckets:
-    - 25504
-    - 27174
 
 model:
   in_channels: 25
@@ -39,4 +36,4 @@ training:
   early_stopping_patience: 20
   num_workers: 16
   random_state: 42
-  deterministic_cudnn: True
+  deterministic_cudnn: False

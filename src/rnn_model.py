@@ -58,4 +58,4 @@ class RNNModel(nn.Module):
         #print(x.shape)
         output = self.head(x)
         #print(output)
-        return output
+        return output.view(-1)

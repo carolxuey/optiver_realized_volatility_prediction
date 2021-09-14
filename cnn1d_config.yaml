@@ -36,4 +36,4 @@ training:
   early_stopping_patience: 20
   num_workers: 16
   random_state: 42
-  deterministic_cudnn: True
+  deterministic_cudnn: False

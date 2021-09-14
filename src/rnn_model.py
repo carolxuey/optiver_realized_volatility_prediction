@@ -15,16 +15,11 @@ class RNNModel(nn.Module):
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=self.stock_embedding_dims)
         self.dropout = nn.Dropout(0.25)
 
+        # Recurrent neural network
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-        self.layer_norm = nn.LayerNorm(self.hidden_size)
-        self.fc = nn.Linear(self.hidden_size * 2, self.hidden_size * 2, bias=True)
-        self.relu = nn.ReLU()
-        self.batch_norm = nn.BatchNorm1d(self.hidden_size * 2)
-
         self.gru = nn.GRU(
             input_size=self.input_size,
             hidden_size=self.hidden_size,
@@ -33,13 +28,17 @@ class RNNModel(nn.Module):
             bidirectional=False,
             batch_first=True
         )
-        for layer_p in self.gru._all_weights:
-            for p in layer_p:
-                if 'weight' in p:
-                    nn.init.kaiming_normal_(self.gru.__getattr__(p))
-        #exit()
+        for layer_parameters in self.gru._all_weights:
+            for parameter in layer_parameters:
+                if 'weight' in parameter:
+                    nn.init.kaiming_normal_(self.gru.__getattr__(parameter))
+
+        self.fc = nn.Linear(self.hidden_size * 2, self.hidden_size * 2, bias=True)
+        self.relu = nn.ReLU()
+        self.batch_norm = nn.BatchNorm1d(self.hidden_size * 2)
+
         self.head = nn.Sequential(
-            nn.Linear(self.hidden_size * 2, 1, bias=True),
+            nn.Linear(self.hidden_size * 2 + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -47,15 +46,14 @@ class RNNModel(nn.Module):
 
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         gru_output, h_n = self.gru(sequences, h_n0)
-        #print('GRU Output ', gru_output.shape)
         avg_pooled_output = torch.mean(gru_output, 1)
         max_pooled_output, _ = torch.max(gru_output, 1)
-        #print('Avg pooled ', avg_pooled_output.shape)
-        #print('Max pooled ', max_pooled_output.shape)
-        #embedded_stock_ids = self.stock_embeddings(stock_ids)
         x = torch.cat([avg_pooled_output, max_pooled_output], dim=1)
         x = self.batch_norm(self.relu(self.fc(x)))
-        #print(x.shape)
+
+        if self.use_stock_id:
+            embedded_stock_ids = self.stock_embeddings(stock_ids)
+            x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
+
         output = self.head(x)
-        #print(output)
         return output.view(-1)

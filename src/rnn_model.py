@@ -26,7 +26,7 @@ class RNNModel(nn.Module):
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
             dropout=0,
-            bidirectional=False,
+            bidirectional=True,
             batch_first=True
         )
         self.head = nn.Sequential(

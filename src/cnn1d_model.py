@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 from fastai.layers import SigmoidRange
 
+from nlnn import NonLocalBlock1d
+
 
 class Conv1dBlock(nn.Module):
 
@@ -121,6 +123,10 @@ class CNN1DModel(nn.Module):
             skip_connection=False,
             initial=True
         )
+        self.nl_layers1 = NonLocalBlock1d(
+            in_channels=32,
+            mode='embedded'
+        )
         self.conv_layers2 = Conv1dLayers(
             in_channels=32,
             out_channels=64,
@@ -158,6 +164,7 @@ class CNN1DModel(nn.Module):
 
         x = torch.transpose(sequences, 1, 2)
         x = self.conv_layers1(x)
+        x = self.nl_layers1(x)
         x = self.conv_layers2(x)
         x = self.conv_layers3(x)
         x = self.conv_layers4(x)

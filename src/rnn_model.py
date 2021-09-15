@@ -24,7 +24,7 @@ class RNNModel(nn.Module):
             input_size=self.input_size,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
-            dropout=0.1,
+            dropout=0,
             bidirectional=False,
             batch_first=True
         )
@@ -33,12 +33,10 @@ class RNNModel(nn.Module):
                 if 'weight' in parameter:
                     nn.init.kaiming_normal_(self.gru.__getattr__(parameter))
 
-        self.fc = nn.Linear(self.hidden_size * 2, self.hidden_size * 2, bias=True)
-        self.relu = nn.ReLU()
-        self.batch_norm = nn.BatchNorm1d(self.hidden_size * 2)
+        self.dropout2 = nn.Dropout(0.5)
 
         self.head = nn.Sequential(
-            nn.Linear(self.hidden_size * 2 + self.stock_embedding_dims, 1, bias=True),
+            nn.Linear(self.hidden_size + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
         )
 
@@ -47,9 +45,9 @@ class RNNModel(nn.Module):
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         gru_output, h_n = self.gru(sequences, h_n0)
         avg_pooled_output = torch.mean(gru_output, 1)
-        max_pooled_output, _ = torch.max(gru_output, 1)
-        x = torch.cat([avg_pooled_output, max_pooled_output], dim=1)
-        x = self.batch_norm(self.relu(self.fc(x)))
+        #max_pooled_output, _ = torch.max(gru_output, 1)
+        #x = torch.cat([avg_pooled_output, max_pooled_output], dim=1)
+        x = self.dropout(avg_pooled_output)
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)

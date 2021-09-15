@@ -14,14 +14,14 @@ preprocessing:
 
 model:
   input_size: 25
-  hidden_size: 128
-  num_layers: 2
+  hidden_size: 64
+  num_layers: 3
   use_stock_id: True
   stock_embedding_dims: 16
 
 training:
   amp: False
-  learning_rate: 0.001
+  learning_rate: 0.0005
   betas:
     - 0.9
     - 0.999

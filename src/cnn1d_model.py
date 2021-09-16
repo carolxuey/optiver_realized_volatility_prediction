@@ -150,6 +150,7 @@ class CNN1DModel(nn.Module):
             skip_connection=False,
             initial=False
         )
+        # Non-local blocks
         self.nl_block1 = NonLocalBlock1d(in_channels=32, mode='embedded')
         self.nl_block2 = NonLocalBlock1d(in_channels=64, mode='embedded')
         self.nl_block3 = NonLocalBlock1d(in_channels=128, mode='embedded')

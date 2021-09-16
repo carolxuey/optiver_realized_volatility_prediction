@@ -28,12 +28,10 @@ class RNNModel(nn.Module):
             bidirectional=False,
             batch_first=True
         )
-        for layer_parameters in self.gru._all_weights:
-            for parameter in layer_parameters:
-                if 'weight' in parameter:
-                    nn.init.kaiming_normal_(self.gru.__getattr__(parameter))
-
-        self.dropout2 = nn.Dropout(0.5)
+        #for layer_parameters in self.gru._all_weights:
+            #for parameter in layer_parameters:
+                #if 'weight' in parameter:
+                    #nn.init.kaiming_normal_(self.gru.__getattr__(parameter))
 
         self.head = nn.Sequential(
             nn.Linear(self.hidden_size + self.stock_embedding_dims, 1, bias=True),

@@ -123,10 +123,6 @@ class CNN1DModel(nn.Module):
             skip_connection=False,
             initial=True
         )
-        self.nl_layers1 = NonLocalBlock1d(
-            in_channels=32,
-            mode='embedded'
-        )
         self.conv_layers2 = Conv1dLayers(
             in_channels=32,
             out_channels=64,
@@ -154,6 +150,10 @@ class CNN1DModel(nn.Module):
             skip_connection=False,
             initial=False
         )
+        self.nl_block1 = NonLocalBlock1d(in_channels=32, mode='embedded')
+        self.nl_block2 = NonLocalBlock1d(in_channels=64, mode='embedded')
+        self.nl_block3 = NonLocalBlock1d(in_channels=128, mode='embedded')
+        self.nl_block4 = NonLocalBlock1d(in_channels=self.out_channels, mode='embedded')
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
             nn.Linear(256 + self.stock_embedding_dims, 1, bias=True),
@@ -164,10 +164,13 @@ class CNN1DModel(nn.Module):
 
         x = torch.transpose(sequences, 1, 2)
         x = self.conv_layers1(x)
-        x = self.nl_layers1(x)
+        x = self.nl_block1(x)
         x = self.conv_layers2(x)
+        x = self.nl_block2(x)
         x = self.conv_layers3(x)
+        x = self.nl_block3(x)
         x = self.conv_layers4(x)
+        x = self.nl_block4(x)
         x = self.pooling(x)
         x = x.view(-1, x.shape[1])
 

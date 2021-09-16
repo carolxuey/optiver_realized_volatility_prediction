@@ -13,7 +13,6 @@ class RNNModel(nn.Module):
         self.use_stock_id = use_stock_id
         self.stock_embedding_dims = stock_embedding_dims
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=self.stock_embedding_dims)
-        self.dropout = nn.Dropout(0.25)
 
         # Recurrent neural network
         self.input_size = input_size
@@ -33,8 +32,7 @@ class RNNModel(nn.Module):
                 if 'weight' in parameter:
                     nn.init.kaiming_normal_(self.gru.__getattr__(parameter))
 
-        self.dropout2 = nn.Dropout(0.5)
-
+        self.dropout = nn.Dropout(0.25)
         self.head = nn.Sequential(
             nn.Linear(self.hidden_size + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
@@ -45,8 +43,6 @@ class RNNModel(nn.Module):
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         gru_output, h_n = self.gru(sequences, h_n0)
         avg_pooled_output = torch.mean(gru_output, 1)
-        #max_pooled_output, _ = torch.max(gru_output, 1)
-        #x = torch.cat([avg_pooled_output, max_pooled_output], dim=1)
         x = self.dropout(avg_pooled_output)
 
         if self.use_stock_id:

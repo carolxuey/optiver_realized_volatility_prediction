@@ -60,23 +60,26 @@ predictors:
   - book_wap3_squared_log_returns_mean
   - book_wap3_squared_log_returns_std
   - book_wap3_squared_log_returns_realized_volatility
-  # Book moving realized volatility aggregations
-  - book_wap1_4_second_interval_realized_volatility_mean
-  - book_wap1_4_second_interval_realized_volatility_std
-  - book_wap1_9_second_interval_realized_volatility_mean
-  - book_wap1_9_second_interval_realized_volatility_std
-  - book_wap1_16_second_interval_realized_volatility_mean
-  - book_wap1_16_second_interval_realized_volatility_std
+  # Book split sequence aggregations
+  - book_wap1_squared_log_returns_300-600_realized_volatility
+  - book_wap1_squared_log_returns_450-600_realized_volatility
+  - book_wap1_squared_log_returns_540-600_realized_volatility
   - trade_seconds_in_bucket_count
   # Trade raw feature aggregations
   - trade_price_std
   - trade_size_std
+  - trade_order_count_mean
+  - trade_order_count_sum
   # Trade order average size aggregations
   - trade_order_average_size_mean
   - trade_order_average_size_std
   # Trade squared log returns aggregations
   - trade_price_squared_log_returns_mean
   - trade_price_squared_log_returns_realized_volatility
+  # Trade split sequence aggregations
+  - trade_price_squared_log_returns_300-600_realized_volatility
+  - trade_price_squared_log_returns_450-600_realized_volatility
+  - trade_price_squared_log_returns_540-600_realized_volatility
 
 model:
   num_leaves: 128
@@ -85,7 +88,7 @@ model:
   bagging_freq: 1
   feature_fraction: 0.7
   feature_fraction_bynode: 1
-  min_data_in_leaf: 250
+  min_data_in_leaf: 500
   max_bin: 255
   lambda_l1: 0.1
   lambda_l2: 0.5
@@ -100,6 +103,6 @@ model:
   n_jobs: -1
 
 fit:
-  boosting_rounds: 5000
+  boosting_rounds: 10000
   early_stopping_rounds: 250
   verbose_eval: 500

@@ -42,6 +42,11 @@ class PreprocessingPipeline:
                 df_book['bid_ask_price1_distance'] = np.abs(df_book['bid_price1'] - df_book['ask_price1'])
                 df_book['bid_ask_price2_distance'] = np.abs(df_book['bid_price2'] - df_book['ask_price2'])
 
+                # Volume
+                df['bid_volume'] = df['bid_size1'] + df['bid_size2']
+                df['ask_volume'] = df['ask_size1'] + df['ask_size2']
+                df['total_volume'] = df['ask_size1'] + df['ask_size2'] + df['bid_size1'] + df['bid_size2']
+
                 # Weighted average prices
                 df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) / \
                                   (df_book['bid_size1'] + df_book['ask_size1'])
@@ -76,14 +81,17 @@ class PreprocessingPipeline:
                     'ask_price_competitiveness': ['mean', 'max', 'distance'],
                     'bid_ask_price1_distance': ['mean', 'std', 'max'],
                     'bid_ask_price2_distance': ['mean', 'std', 'max'],
-                    'bid_price1_squared_log_returns': ['mean', 'std', 'sum'],
-                    'bid_price2_squared_log_returns': ['mean', 'std', 'sum'],
-                    'ask_price1_squared_log_returns': ['mean', 'std', 'sum'],
-                    'ask_price2_squared_log_returns': ['mean', 'std', 'sum'],
-                    'bid_size1_squared_log_returns': ['mean', 'std', 'sum'],
-                    'bid_size2_squared_log_returns': ['mean', 'std', 'sum'],
-                    'ask_size1_squared_log_returns': ['mean', 'std', 'sum'],
-                    'ask_size2_squared_log_returns': ['mean', 'std', 'sum'],
+                    'bid_size': ['mean', 'std', 'max', 'min', 'distance'],
+                    'ask_size': ['mean', 'std', 'max', 'min', 'distance'],
+                    'total_size': ['mean', 'std', 'max', 'min', 'distance'],
+                    'bid_price1_squared_log_returns': ['mean', 'std'],
+                    'bid_price2_squared_log_returns': ['mean', 'std'],
+                    'ask_price1_squared_log_returns': ['mean', 'std'],
+                    'ask_price2_squared_log_returns': ['mean', 'std'],
+                    'bid_size1_squared_log_returns': ['mean', 'std'],
+                    'bid_size2_squared_log_returns': ['mean', 'std'],
+                    'ask_size1_squared_log_returns': ['mean', 'std'],
+                    'ask_size2_squared_log_returns': ['mean', 'std'],
                     'wap1': ['std'],
                     'wap2': ['std'],
                     'wap3': ['std'],
@@ -99,8 +107,6 @@ class PreprocessingPipeline:
                                 feature_aggregation = np.sqrt(df_book.groupby('time_id')[feature].sum())
                             elif aggregation == 'distance':
                                 feature_aggregation = df_book.groupby('time_id')[feature].max() - df_book.groupby('time_id')[feature].min()
-                            elif aggregation == 'autocorrelation':
-                                feature_aggregation = df_book.groupby('time_id')[feature].apply(pd.Series.autocorr)
                             else:
                                 feature_aggregation = df_book.groupby('time_id')[feature].agg(aggregation)
 
@@ -113,14 +119,12 @@ class PreprocessingPipeline:
                         # Aggregating only on the last split
                         if t2 != timesteps[-1]:
                             continue
-                        for feature in ['wap1_squared_log_returns', 'wap2_squared_log_returns', 'wap3_squared_log_returns']:
-                            for aggregation in ['mean', 'std', 'realized_volatility']:
-                                if aggregation == 'realized_volatility':
-                                    feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')[feature].sum())
-                                else:
-                                    feature_aggregation = df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')[feature].agg(aggregation)
 
-                                df.loc[df['stock_id'] == stock_id, f'{feature}_{t1}-{t2}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+                        split_wap1_squared_log_returns_realized_volatility_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')['wap1_squared_log_returns'].sum())
+                        df.loc[df['stock_id'] == stock_id, f'book_wap1_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(split_wap1_squared_log_returns_realized_volatility_aggregation)
+
+                        split_seconds_in_bucket_count_aggregation = df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')['seconds_in_bucket'].count()
+                        df.loc[df['stock_id'] == stock_id, f'book_seconds_in_bucket_{t1}-{t2}_count'] = df[df['stock_id'] == stock_id]['time_id'].map(split_seconds_in_bucket_count_aggregation)
 
     def _get_trade_features(self):
 
@@ -142,7 +146,7 @@ class PreprocessingPipeline:
                     'seconds_in_bucket': ['count'],
                     'price': ['std'],
                     'size': ['std'],
-                    'order_count': ['mean', 'std', 'sum', 'max'],
+                    'order_count': ['mean', 'sum'],
                     'order_average_size': ['mean', 'std'],
                     'price_squared_log_returns': ['mean', 'std', 'realized_volatility']
                 }
@@ -156,6 +160,17 @@ class PreprocessingPipeline:
                                 feature_aggregation = df_trade.groupby('time_id')[feature].agg(aggregation)
 
                             df.loc[df['stock_id'] == stock_id, f'trade_{feature}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+
+                # Aggregations on equally split sequences
+                for n_splits in [2, 4, 10]:
+                    timesteps = np.append(np.arange(0, 600, 600 // n_splits), [600])
+                    for split, (t1, t2) in enumerate(zip(timesteps, timesteps[1:]), 1):
+                        # Aggregating only on the last split
+                        if t2 != timesteps[-1]:
+                            continue
+
+                        split_price_squared_log_returns_realized_volatility_aggregation = np.sqrt(df_trade.loc[(df_trade['seconds_in_bucket'] >= t1) & (df_trade['seconds_in_bucket'] < t2), :].groupby('time_id')['price_squared_log_returns'].sum())
+                        df.loc[df['stock_id'] == stock_id, f'trade_price_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(split_price_squared_log_returns_realized_volatility_aggregation)
 
             # Fill missing trade data with zeros
             self.df_train = self.df_train.fillna(0)

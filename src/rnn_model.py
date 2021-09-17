@@ -43,11 +43,11 @@ class RNNModel(nn.Module):
 
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         gru_output, h_n = self.gru(sequences, h_n0)
-        attn_output, scores = self.attention(gru_output)
+        x, attentions = self.attention(gru_output)
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)
-            x = torch.cat([attn_output, self.dropout(embedded_stock_ids)], dim=1)
+            x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
 
         output = self.head(x)
         return output.view(-1)

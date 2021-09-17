@@ -8,15 +8,12 @@ import path_utils
 
 class PreprocessingPipeline:
 
-    def __init__(self, df_train, df_test, create_features, split_type, n_splits, shuffle, random_state):
+    def __init__(self, df_train, df_test, create_features, split_type):
 
         self.df_train = df_train.copy(deep=True)
         self.df_test = df_test.copy(deep=True)
         self.create_features = create_features
         self.split_type = split_type
-        self.n_splits = n_splits
-        self.shuffle = shuffle
-        self.random_state = random_state
 
     def _label_encode(self):
 
@@ -120,8 +117,9 @@ class PreprocessingPipeline:
                 for n_splits in [2, 4]:
                     timesteps = np.append(np.arange(0, 600, 600 // n_splits), [600])
                     for split, (t1, t2) in enumerate(zip(timesteps, timesteps[1:]), 1):
-                        feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')['wap1_squared_log_returns'].sum())
-                        df.loc[df['stock_id'] == stock_id, f'book_wap1_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+                        for wap in [1, 2, 3]:
+                            feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')[f'wap{wap}_squared_log_returns'].sum())
+                            df.loc[df['stock_id'] == stock_id, f'book_wap{wap}_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
 
     def _get_trade_features(self):
 

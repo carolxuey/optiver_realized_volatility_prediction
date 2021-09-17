@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class SelfAttention(nn.Module):
 
-    def __init__(self, attention_size, batch_first=False):
+    def __init__(self, attention_size):
 
         super(SelfAttention, self).__init__()
 
@@ -13,7 +13,6 @@ class SelfAttention(nn.Module):
 
         self.softmax = nn.Softmax(dim=-1)
         self.relu = nn.ReLU()
-        self.batch_first = batch_first
 
     def forward(self, x):
 

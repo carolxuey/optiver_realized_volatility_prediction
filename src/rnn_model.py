@@ -15,6 +15,7 @@ class RNNModel(nn.Module):
         self.use_stock_id = use_stock_id
         self.stock_embedding_dims = stock_embedding_dims
         self.stock_embeddings = nn.Embedding(num_embeddings=113, embedding_dim=self.stock_embedding_dims)
+        self.dropout = nn.Dropout(0.25)
 
         # Recurrent neural network
         self.input_size = input_size
@@ -30,9 +31,9 @@ class RNNModel(nn.Module):
             batch_first=True
         )
 
-        self.attention = SelfAttention(attention_size=64)
+        # Sequence self attention
+        self.attention = SelfAttention(attention_size=self.hidden_size)
 
-        self.dropout = nn.Dropout(0.25)
         self.head = nn.Sequential(
             nn.Linear(self.hidden_size + self.stock_embedding_dims, 1, bias=True),
             SigmoidRange(0, 0.1)
@@ -43,8 +44,6 @@ class RNNModel(nn.Module):
         h_n0 = torch.zeros(self.num_layers, sequences.size(0), self.hidden_size).to(self.device)
         gru_output, h_n = self.gru(sequences, h_n0)
         attn_output, scores = self.attention(gru_output)
-        #avg_pooled_output = torch.mean(gru_output, 1)
-        #x = self.dropout(attn_output)
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)

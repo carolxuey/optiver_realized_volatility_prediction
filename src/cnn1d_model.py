@@ -150,11 +150,13 @@ class CNN1DModel(nn.Module):
             skip_connection=False,
             initial=False
         )
+
         # Non-local blocks
         self.nl_block1 = NonLocalBlock1d(in_channels=32, mode='embedded')
         self.nl_block2 = NonLocalBlock1d(in_channels=64, mode='embedded')
         self.nl_block3 = NonLocalBlock1d(in_channels=128, mode='embedded')
         self.nl_block4 = NonLocalBlock1d(in_channels=self.out_channels, mode='embedded')
+
         self.pooling = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Sequential(
             nn.Linear(256 + self.stock_embedding_dims, 1, bias=True),

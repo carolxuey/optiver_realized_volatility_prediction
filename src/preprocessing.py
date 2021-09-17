@@ -68,6 +68,7 @@ class PreprocessingPipeline:
                     for wap in [1]:
                         df_book[f'wap{wap}_{window}_second_interval_realized_volatility'] = np.sqrt(np.abs(df_book.groupby('time_id')[f'wap{wap}_squared_log_returns'].fillna(0).rolling(window=window, min_periods=window).sum().reset_index(drop=True)))
 
+                # Aggregations on entire sequences
                 feature_aggregations = {
                     'seconds_in_bucket': ['count'],
                     'bid_price1': [],
@@ -90,9 +91,9 @@ class PreprocessingPipeline:
                     'bid_size2_squared_log_returns': ['mean', 'std', 'sum'],
                     'ask_size1_squared_log_returns': ['mean', 'std', 'sum'],
                     'ask_size2_squared_log_returns': ['mean', 'std', 'sum'],
-                    'wap1': ['std', 'sum'],
-                    'wap2': ['std', 'sum'],
-                    'wap3': ['std', 'sum'],
+                    'wap1': ['std'],
+                    'wap2': ['std'],
+                    'wap3': ['std'],
                     'wap1_squared_log_returns': ['mean', 'std', 'realized_volatility'],
                     'wap2_squared_log_returns': ['mean', 'std', 'realized_volatility'],
                     'wap3_squared_log_returns': ['mean', 'std', 'realized_volatility'],
@@ -114,6 +115,13 @@ class PreprocessingPipeline:
                                 feature_aggregation = df_book.groupby('time_id')[feature].agg(aggregation)
 
                             df.loc[df['stock_id'] == stock_id, f'book_{feature}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+
+                # Aggregations on equally split sequences
+                for n_splits in [2, 4]:
+                    timesteps = np.append(np.arange(0, 600, 600 // n_splits), [600])
+                    for split, (t1, t2) in enumerate(zip(timesteps, timesteps[1:]), 1):
+                        feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')['wap1_squared_log_returns'].sum())
+                        df.loc[df['stock_id'] == stock_id, f'book_wap1_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
 
     def _get_trade_features(self):
 

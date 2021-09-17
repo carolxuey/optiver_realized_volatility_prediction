@@ -43,9 +43,9 @@ class PreprocessingPipeline:
                 df_book['bid_ask_price2_distance'] = np.abs(df_book['bid_price2'] - df_book['ask_price2'])
 
                 # Volume
-                df['bid_volume'] = df['bid_size1'] + df['bid_size2']
-                df['ask_volume'] = df['ask_size1'] + df['ask_size2']
-                df['total_volume'] = df['ask_size1'] + df['ask_size2'] + df['bid_size1'] + df['bid_size2']
+                df_book['bid_volume'] = df_book['bid_size1'] + df_book['bid_size2']
+                df_book['ask_volume'] = df_book['ask_size1'] + df_book['ask_size2']
+                df_book['total_volume'] = df_book['ask_size1'] + df_book['ask_size2'] + df_book['bid_size1'] + df_book['bid_size2']
 
                 # Weighted average prices
                 df_book['wap1'] = (df_book['bid_price1'] * df_book['ask_size1'] + df_book['ask_price1'] * df_book['bid_size1']) / \

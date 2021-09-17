@@ -114,12 +114,14 @@ class PreprocessingPipeline:
                             df.loc[df['stock_id'] == stock_id, f'book_{feature}_{aggregation}'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
 
                 # Aggregations on equally split sequences
-                for n_splits in [2, 4]:
+                for n_splits in [2, 4, 10, 25, 50]:
                     timesteps = np.append(np.arange(0, 600, 600 // n_splits), [600])
                     for split, (t1, t2) in enumerate(zip(timesteps, timesteps[1:]), 1):
-                        for wap in [1, 2, 3]:
-                            feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')[f'wap{wap}_squared_log_returns'].sum())
-                            df.loc[df['stock_id'] == stock_id, f'book_wap{wap}_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
+                        # Aggregating on the split for larger n_splits
+                        if n_splits > 4 and t2 != timesteps[-1]:
+                            continue
+                        feature_aggregation = np.sqrt(df_book.loc[(df_book['seconds_in_bucket'] >= t1) & (df_book['seconds_in_bucket'] < t2), :].groupby('time_id')['wap1_squared_log_returns'].sum())
+                        df.loc[df['stock_id'] == stock_id, f'book_wap1_squared_log_returns_{t1}-{t2}_realized_volatility'] = df[df['stock_id'] == stock_id]['time_id'].map(feature_aggregation)
 
     def _get_trade_features(self):
 

@@ -9,6 +9,7 @@ import training_utils
 from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
 from rnn_model import RNNModel
+from mlp_mixer import MLPMixerModel
 from visualization import visualize_learning_curve
 
 
@@ -30,6 +31,8 @@ class NeuralNetworkTrainer:
             model = CNN1DModel(**self.model_parameters)
         elif self.model_name == 'rnn':
             model = RNNModel(**self.model_parameters)
+        elif self.model_name == 'mlp_mixer':
+            model = MLPMixerModel(**self.model_parameters)
 
         return model
 

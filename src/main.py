@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     trainer = None
 
-    if args.model == 'cnn1d' or args.model == 'rnn':
+    if args.model == 'cnn1d' or args.model == 'rnn' or args.model == 'mlp_mixer':
 
         trainer = NeuralNetworkTrainer(
             model_name=config['model_name'],

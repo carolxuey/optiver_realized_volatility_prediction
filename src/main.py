@@ -35,9 +35,6 @@ if __name__ == '__main__':
         df_test,
         config['preprocessing']['create_features'],
         config['preprocessing']['split_type'],
-        config['preprocessing']['n_splits'],
-        config['preprocessing']['shuffle'],
-        config['preprocessing']['random_state']
     )
     df_train, df_test = preprocessing_pipeline.transform()
 

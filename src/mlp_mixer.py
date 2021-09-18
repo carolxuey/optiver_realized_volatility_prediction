@@ -42,11 +42,11 @@ class MixerBlock(nn.Module):
         return x
 
 
-class MLPMixer(nn.Module):
+class MLPMixerModel(nn.Module):
 
     def __init__(self, sequence_length, channels, patch_size, hidden_dim, num_blocks, token_mixer_dim, token_mixer_dropout_rate, channel_mixer_dim, channel_mixer_dropout_rate, use_stock_id, stock_embedding_dims):
 
-        super(MLPMixer, self).__init__()
+        super(MLPMixerModel, self).__init__()
 
         # Stock embeddings
         self.use_stock_id = use_stock_id

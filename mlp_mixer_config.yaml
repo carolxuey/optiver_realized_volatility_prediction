@@ -15,13 +15,16 @@ preprocessing:
 model:
   sequence_length: 600
   channels: 25
-  patch_size: (100, 5)
-  hidden_dim: 64
+  patch_size:
+    - 30
+    - 1
+  hidden_dim: 128
   num_blocks: 2
   token_mixer_dim: 64
   token_mixer_dropout_rate: 0
   channel_mixer_dim: 64
   channel_mixer_dropout_rate: 0
+  use_stock_id: True
   stock_embedding_dims: 16
 
 training:

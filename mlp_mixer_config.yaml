@@ -22,6 +22,7 @@ model:
   token_mixer_dropout_rate: 0
   channel_mixer_dim: 64
   channel_mixer_dropout_rate: 0
+  use_stock_id: True
   stock_embedding_dims: 16
 
 training:

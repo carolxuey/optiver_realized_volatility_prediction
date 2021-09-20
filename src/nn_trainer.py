@@ -15,10 +15,11 @@ from visualization import visualize_learning_curve
 
 class NeuralNetworkTrainer:
 
-    def __init__(self, model_name, model_path, preprocessing_parameters, model_parameters, training_parameters):
+    def __init__(self, model_name, model_path, pretrained, preprocessing_parameters, model_parameters, training_parameters):
 
         self.model_name = model_name
         self.model_path = model_path
+        self.pretrained = pretrained
         self.preprocessing_parameters = preprocessing_parameters
         self.model_parameters = model_parameters
         self.training_parameters = training_parameters
@@ -34,6 +35,9 @@ class NeuralNetworkTrainer:
         elif self.model_name == 'mlp_mixer':
             model = MLPMixerModel(**self.model_parameters)
 
+        if self.pretrained:
+            model.load_state_dict(torch.load(f'{self.model_path}/{self.model_name}_pretrained.pt'))
+
         return model
 
     def train_fn(self, train_loader, model, criterion, optimizer, device):
@@ -48,7 +52,7 @@ class NeuralNetworkTrainer:
         else:
             scaler = None
 
-        for stock_id_encoded, sequences, _, target in progress_bar:
+        for stock_id_encoded, sequences, target, _ in progress_bar:
             stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
 
             if scaler is not None:
@@ -80,7 +84,7 @@ class NeuralNetworkTrainer:
         losses = []
 
         with torch.no_grad():
-            for stock_id_encoded, sequences, _, target in progress_bar:
+            for stock_id_encoded, sequences, target, _ in progress_bar:
                 stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
                 output = model(stock_id_encoded, sequences)
                 loss = criterion(target, output)

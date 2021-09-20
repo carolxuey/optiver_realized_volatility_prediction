@@ -1,5 +1,6 @@
 model_name: cnn1d
 model_path: ../models/cnn1d
+pretrained: True
 
 preprocessing:
   create_features: False

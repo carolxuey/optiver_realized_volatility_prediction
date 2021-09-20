@@ -134,6 +134,7 @@ class PreprocessingPipeline:
                 for sequence in log_returns_sequences:
                     df_trade[f'{sequence}_squared_log_returns'] = np.log(df_trade[sequence] / df_trade.groupby('time_id')[sequence].shift(1)) ** 2
 
+                # Aggregations on entire sequences
                 feature_aggregations = {
                     'seconds_in_bucket': ['count'],
                     'price': ['std'],

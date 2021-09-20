@@ -11,7 +11,7 @@ class MLPBlock(nn.Module):
 
         self.mlp = nn.Sequential(
             nn.Linear(input_dim, hidden_dim, bias=True),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Dropout(dropout_rate),
             nn.Linear(hidden_dim, input_dim, bias=True),
             nn.Dropout(dropout_rate)
@@ -23,28 +23,24 @@ class MLPBlock(nn.Module):
 
 class MixerBlock(nn.Module):
 
-    def __init__(self, num_patches, hidden_dim, token_mixer_dim, token_mixer_dropout_rate, channel_mixer_dim, channel_mixer_dropout_rate):
+    def __init__(self, num_patches, hidden_dim, token_mixer_dim, token_mixer_dropout_rate):
 
         super(MixerBlock, self).__init__()
 
         self.layer_norm_token = nn.LayerNorm(hidden_dim)
         self.token_mixer = MLPBlock(num_patches, token_mixer_dim, token_mixer_dropout_rate)
-        self.layer_norm_channel = nn.LayerNorm(hidden_dim)
-        self.channel_mixer = MLPBlock(hidden_dim, channel_mixer_dim, channel_mixer_dropout_rate)
 
     def forward(self, x):
 
         out = self.layer_norm_token(x).transpose(1, 2)
         x = x + self.token_mixer(out).transpose(1, 2)
-        out = self.layer_norm_channel(x)
-        x = x + self.channel_mixer(out)
 
         return x
 
 
 class MLPMixerModel(nn.Module):
 
-    def __init__(self, sequence_length, channels, patch_size, hidden_dim, num_blocks, token_mixer_dim, token_mixer_dropout_rate, channel_mixer_dim, channel_mixer_dropout_rate, use_stock_id, stock_embedding_dims):
+    def __init__(self, sequence_length, channels, patch_size, hidden_dim, num_blocks, token_mixer_dim, token_mixer_dropout_rate, use_stock_id, stock_embedding_dims):
 
         super(MLPMixerModel, self).__init__()
 
@@ -66,8 +62,6 @@ class MLPMixerModel(nn.Module):
                     hidden_dim=hidden_dim,
                     token_mixer_dim=token_mixer_dim,
                     token_mixer_dropout_rate=token_mixer_dropout_rate,
-                    channel_mixer_dim=channel_mixer_dim,
-                    channel_mixer_dropout_rate=channel_mixer_dropout_rate
                 ) for _ in range(num_blocks)
             ]
         )
@@ -89,7 +83,7 @@ class MLPMixerModel(nn.Module):
 
         if self.use_stock_id:
             embedded_stock_ids = self.stock_embeddings(stock_ids)
-            x = torch.cat([x, self.dropout(embedded_stock_ids)], dim=1)
+            x = torch.cat([self.dropout(x), self.dropout(embedded_stock_ids)], dim=1)
 
         output = self.head(x)
         return output.view(-1)

@@ -14,7 +14,7 @@ def evaluate_predictions(df_train, predictions_column):
     predictions_column (str): Predictions of the model
     """
 
-    model_name = predictions_column.split("_")[0]
+    model_name = predictions_column.split("_predictions")[0]
 
     for fold in sorted(df_train['fold'].unique()):
         _, val_idx = df_train.loc[df_train['fold'] != fold].index, df_train.loc[df_train['fold'] == fold].index
@@ -28,7 +28,7 @@ def evaluate_predictions(df_train, predictions_column):
         y_true=df_train['target'],
         y_pred=df_train[predictions_column],
         title=f'{model_name.upper()} Model - Global Predictions (OOF Score: {oof_score:.6})',
-        path=f'{path_utils.MODELS_PATH}/{predictions_column.split("_")[0]}/{model_name}_global_predictions.png'
+        path=f'{path_utils.MODELS_PATH}/{predictions_column.split("_predictions")[0]}/{model_name}_global_predictions.png'
     )
 
     for stock_id in df_train['stock_id'].unique():
@@ -41,5 +41,5 @@ def evaluate_predictions(df_train, predictions_column):
             y_true=df_stock['target'],
             y_pred=df_stock[predictions_column],
             title=f'{model_name.upper()} Model - Stock {stock_id} Predictions (OOF Score: {stock_oof_score:.6})',
-            path=f'{path_utils.MODELS_PATH}/{predictions_column.split("_")[0]}/{model_name}_stock{stock_id}_predictions.png'
+            path=f'{path_utils.MODELS_PATH}/{predictions_column.split("_predictions")[0]}/{model_name}_stock{stock_id}_predictions.png'
         )

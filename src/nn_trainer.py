@@ -48,7 +48,7 @@ class NeuralNetworkTrainer:
         else:
             scaler = None
 
-        for stock_id_encoded, sequences, target, _ in progress_bar:
+        for stock_id_encoded, sequences, _, target in progress_bar:
             stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
 
             if scaler is not None:
@@ -80,7 +80,7 @@ class NeuralNetworkTrainer:
         losses = []
 
         with torch.no_grad():
-            for stock_id_encoded, sequences, target, _ in progress_bar:
+            for stock_id_encoded, sequences, _, target in progress_bar:
                 stock_id_encoded, sequences, target = stock_id_encoded.to(device), sequences.to(device), target.to(device)
                 output = model(stock_id_encoded, sequences)
                 loss = criterion(target, output)

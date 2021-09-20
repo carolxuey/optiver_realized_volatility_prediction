@@ -190,4 +190,7 @@ class Optiver2DDataset(Dataset):
         target = sample['target']
         target = torch.as_tensor(target, dtype=torch.float)
 
-        return stock_id_encoded, sequences, target
+        current_realized_volatility = np.sqrt(np.sum(np.diff(book_wap1_log, prepend=[book_wap1_log[0]])))
+        current_realized_volatility = torch.as_tensor(current_realized_volatility, dtype=torch.float)
+
+        return stock_id_encoded, sequences, target, current_realized_volatility

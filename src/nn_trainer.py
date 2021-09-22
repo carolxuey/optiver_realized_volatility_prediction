@@ -10,6 +10,7 @@ from datasets import Optiver2DDataset
 from cnn1d_model import CNN1DModel
 from rnn_model import RNNModel
 from mlp_mixer import MLPMixerModel
+from gmlp import gMLPModel
 from visualization import visualize_learning_curve
 
 
@@ -34,6 +35,8 @@ class NeuralNetworkTrainer:
             model = RNNModel(**self.model_parameters)
         elif self.model_name == 'mlp_mixer':
             model = MLPMixerModel(**self.model_parameters)
+        elif self.model_name == 'gmlp':
+            model = gMLPModel(**self.model_parameters)
 
         if self.pretrained:
             model.load_state_dict(torch.load(f'{self.model_path}/{self.model_name}_pretrained.pt'))
